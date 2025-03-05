@@ -1994,12 +1994,18 @@ processChatCommand' vr = \case
           Just ent -> throwChatError $ CECommandError $ "connection exists: " <> show (connEntityInfo ent)
         where
           joinNewConn chatV dm = do
+            liftIO $ print "##### CHAT: joinNewConn, withAgent prepareConnectionToJoin"
             connId <- withAgent $ \a -> prepareConnectionToJoin a (aUserId user) True cReq pqSup'
+            liftIO $ print "##### CHAT: joinNewConn, createDirectConnection"
             pcc <- withFastStore' $ \db -> createDirectConnection db user connId cReq ConnPrepared (incognitoProfile $> profileToSend) subMode chatV pqSup'
+            liftIO $ print "##### CHAT: joinNewConn, joinPreparedConn"
             joinPreparedConn connId pcc dm
           joinPreparedConn connId pcc@PendingContactConnection {pccConnId} dm = do
+            liftIO $ print "##### CHAT: joinPreparedConn, withAgent joinConnection"
             void $ withAgent $ \a -> joinConnection a (aUserId user) connId True cReq dm pqSup' subMode
+            liftIO $ print "##### CHAT: joinPreparedConn, updateConnectionStatusFromTo"
             withFastStore' $ \db -> updateConnectionStatusFromTo db pccConnId ConnPrepared ConnJoined
+            liftIO $ print "##### CHAT: joinPreparedConn, CRSentConfirmation"
             pure $ CRSentConfirmation user pcc {pccConnStatus = ConnJoined}
           cReqs =
             ( CRInvitationUri crData {crScheme = SSSimplex} e2e,
