@@ -5,7 +5,7 @@
     <link type="application/atom+xml" rel="self" href="https://simplex.chat/feed.atom"/>
     <title>SimpleX Chat Blog</title>
     <subtitle>It allows you to stay up to date with the latest Blogs from SimpleX Chat.</subtitle>
-    <updated>2024-12-10T00:00:00Z</updated>
+    <updated>2025-01-14T00:00:00Z</updated>
     <author>
         <name>SimpleX Chat</name>
         <email>chat@simplex.chat</email>
@@ -305,7 +305,7 @@
 &lt;p&gt;This service continues running when the app is switched off, and it is restarted when the device is restarted even if you don&#39;t open the app - so the message notifications arrive instantly every time. To maximize battery life, it can be turned off by switching off &amp;quot;Private notifications&amp;quot;. You will still receive notifications while the app is running or in the background.&lt;/p&gt;
 &lt;p&gt;So, for Android we can now deliver instant message notifications without compromising users&#39; privacy in any way. The app version 1.5 that includes private instant notifications is now available on &lt;a href=&quot;https://play.google.com/store/apps/details?id=chat.simplex.app&quot;&gt;Play Store&lt;/a&gt;, in our &lt;a href=&quot;https://app.simplex.chat/&quot;&gt;F-Droid repo&lt;/a&gt; and via direct &lt;a href=&quot;https://github.com/simplex-chat/simplex-chat/releases/latest/download/simplex.apk&quot;&gt;APK&lt;/a&gt; downloads!&lt;/p&gt;
 &lt;p&gt;Please let us know what needs to be improved - it&#39;s only the first version of instant notifications for Android!&lt;/p&gt;
-&lt;h2 id=&quot;our-ios-approach-has-one-trade-off&quot; tabindex=&quot;-1&quot;&gt;Our iOS approach has one trade-off&lt;/h2&gt;
+&lt;h2 id=&quot;ios-notifications-require-a-server&quot; tabindex=&quot;-1&quot;&gt;iOS notifications require a server&lt;/h2&gt;
 &lt;p&gt;iOS is much more protective of what apps are allowed to run on the devices, and the solution that worked on Android is not viable on iOS.&lt;/p&gt;
 &lt;p&gt;We already have background refresh in the iOS app that periodically checks for new messages, and if you use the app every day it delivers notifications within 10 or 20 minutes. It is not instant, but it may be usable for some. If you use the app infrequently, however, this delay can become several hours, or your phone may stop checking for the new messages completely. This is not ideal!&lt;/p&gt;
 &lt;p&gt;The only solution known to us is using Apple&#39;s push notifications service (APN) to deliver push notifications.&lt;/p&gt;
@@ -2158,7 +2158,7 @@ file ---&amp;gt; |   XFTP   | ------&amp;gt;           XFTP            ----&amp;
 &lt;p&gt;&lt;sup&gt;2&lt;/sup&gt; Post-quantum cryptography is available in beta version, as opt-in only for direct conversations. See below how it will be rolled-out further.&lt;/p&gt;
 &lt;p&gt;Some columns are marked with a yellow checkmark:&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;when messages are padded, but not to a fixed size.&lt;/li&gt;
+&lt;li&gt;when messages are padded, but not to a fixed size (Briar pads messages to the size rounded up to 1024 bytes, Signal - to 160 bytes).&lt;/li&gt;
 &lt;li&gt;when repudiation does not include client-server connection. In case of Cwtch it appears that the presence of cryptographic signatures compromises repudiation (deniability), but it needs to be clarified.&lt;/li&gt;
 &lt;li&gt;when 2-factor key exchange is optional (via security code verification).&lt;/li&gt;
 &lt;li&gt;when post-quantum cryptography is only added to the initial key agreement and does not protect break-in recovery.&lt;/li&gt;
@@ -3006,6 +3006,7 @@ A few bugs and UX issues but great foundation. Love that it’s public domain.&l
             <link rel="alternate" type="text/html" href="https://simplex.chat/blog/20241016-wired-attack-on-privacy.html"/>
             <title>Wired’s Attack on Privacy</title>
             <content type="html">&lt;h1 id=&quot;wireds-attack-on-privacy&quot; tabindex=&quot;-1&quot;&gt;Wired’s Attack on Privacy&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Published:&lt;/strong&gt; Oct 16, 2024&lt;/p&gt;
 &lt;img src=&quot;https://simplex.chat/blog/images/20241016-wired-privacy.jpg&quot; width=&quot;330&quot; class=&quot;float-to-right&quot; /&gt;
 &lt;p&gt;The &lt;a href=&quot;https://www.wired.com/story/neo-nazis-flee-telegram-encrypted-app-simplex/&quot;&gt;Wired article&lt;/a&gt; by David Gilbert focusing on neo-Nazis moving to SimpleX Chat following the Telegram&#39;s changes in privacy policy is biased and misleading. By cherry-picking information from &lt;a href=&quot;https://www.isdglobal.org/digital_dispatches/neo-nazi-accelerationists-seek-new-digital-refuge-amid-looming-telegram-crackdown/&quot;&gt;the report&lt;/a&gt; by the Institute for Strategic Dialogue (ISD), Wired fails to mention that SimpleX network design prioritizes privacy in order to protect human rights defenders, journalists, and everyday users who value their privacy — many people feel safer using SimpleX than non-private apps, being protected from strangers contacting them.&lt;/p&gt;
 &lt;p&gt;Yes, privacy-focused SimpleX network offers encryption and anonymity — that’s the point. To paint this as problematic solely because of who may use such apps misses the broader, critical context.&lt;/p&gt;
@@ -3146,6 +3147,228 @@ A few bugs and UX issues but great foundation. Love that it’s public domain.&l
 &lt;p&gt;[1] You can also to self-host your own SimpleX servers on &lt;a href=&quot;https://home.runonflux.io/apps/marketplace?q=simplex&quot;&gt;Flux decentralized cloud&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;[2] The probability of connection being de-anonymized and the number of random server choices follow this equation: &lt;code&gt;(1 - s ^ 2) ^ n = 1 - p&lt;/code&gt;, where &lt;code&gt;s&lt;/code&gt; is the share of attacker-controlled servers in the network, &lt;code&gt;n&lt;/code&gt; is the number of random choices of entry and exit nodes for the circuit, and &lt;code&gt;p&lt;/code&gt; is the probability of both entry and exit nodes, and the connection privacy being compromised. Substituting &lt;code&gt;0.02&lt;/code&gt; (2%) for &lt;code&gt;s&lt;/code&gt;, &lt;code&gt;0.5&lt;/code&gt; (50%) for &lt;code&gt;p&lt;/code&gt;, and solving this equation for &lt;code&gt;n&lt;/code&gt; we obtain that &lt;code&gt;1733&lt;/code&gt; random circuits have 50% probability of privacy being compromised.&lt;/p&gt;
 &lt;p&gt;Also see &lt;a href=&quot;https://ritter.vg/p/tor-v1.6.pdf&quot;&gt;this presentation about Tor&lt;/a&gt;, specifically the approximate calculations on page 76, and also &lt;a href=&quot;https://blog.torproject.org/announcing-vanguards-add-onion-services/&quot;&gt;Tor project post&lt;/a&gt; about the changes that made attack on hidden service anonymity harder, but still viable in case the it is used for a long time.&lt;/p&gt;
+</content>
+            <author>
+                <name>SimpleX Chat</name>
+                <email>chat@simplex.chat</email>
+            </author>
+        </entry>
+        <entry>
+            <id>https://simplex.chat/blog/20241210-simplex-network-v6-2-servers-by-flux-business-chats.html</id>
+            <!-- <updated>10 Dec 2024</updated> -->
+            <updated>2024-12-10T00:00:00Z</updated>
+            <link rel="alternate" type="text/html" href="https://simplex.chat/blog/20241210-simplex-network-v6-2-servers-by-flux-business-chats.html"/>
+            <title>SimpleX network: preset servers operated by Flux, business chats and more with v6.2 of the apps</title>
+            <content type="html">&lt;h1 id=&quot;simplex-network-preset-servers-operated-by-flux-business-chats-and-more-with-v62-of-the-apps&quot; tabindex=&quot;-1&quot;&gt;SimpleX network: preset servers operated by Flux, business chats and more with v6.2 of the apps&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Published:&lt;/strong&gt; Dec 10, 2024&lt;/p&gt;
+&lt;p&gt;What&#39;s new in v6.2:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://simplex.chat/blog/20241210-simplex-network-v6-2-servers-by-flux-business-chats.html#simplex-chat-and-flux-improve-metadata-privacy-in-simplex-network&quot;&gt;SimpleX Chat and Flux&lt;/a&gt; improve metadata privacy in SimpleX network.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://simplex.chat/blog/20241210-simplex-network-v6-2-servers-by-flux-business-chats.html#business-chats&quot;&gt;Business chats&lt;/a&gt; to provide support from your business to users of SimpleX network.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://simplex.chat/blog/20241210-simplex-network-v6-2-servers-by-flux-business-chats.html#better-user-experience&quot;&gt;Better user experience&lt;/a&gt;: open on the first unread, jump to quoted messages, see who reacted.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://simplex.chat/blog/20241210-simplex-network-v6-2-servers-by-flux-business-chats.html#improving-notifications-in-ios-app&quot;&gt;Improving notifications in iOS app&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;whats-new-in-v62&quot; tabindex=&quot;-1&quot;&gt;What&#39;s new in v6.2&lt;/h2&gt;
+&lt;h3 id=&quot;simplex-chat-and-flux-improve-metadata-privacy-in-simplex-network&quot; tabindex=&quot;-1&quot;&gt;SimpleX Chat and Flux improve metadata privacy in SimpleX network&lt;/h3&gt;
+&lt;p&gt;&lt;img src=&quot;https://simplex.chat/blog/images/20241210-operators-1.png&quot; width=&quot;288&quot; class=&quot;float-to-right&quot; /&gt; &lt;img src=&quot;https://simplex.chat/blog/images/20241210-operators-2.png&quot; width=&quot;288&quot; class=&quot;float-to-right&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;SimpleX Chat and &lt;a href=&quot;https://runonflux.com/&quot;&gt;Flux&lt;/a&gt; (Influx Technology Limited) made an agreement to include messaging and file servers operated by Flux into the app.&lt;/p&gt;
+&lt;p&gt;SimpleX network is decentralized by design, but in the users of the previous app versions had to find other servers online or host servers themselves to use any other servers than operated by us.&lt;/p&gt;
+&lt;p&gt;Now all users can choose between servers of two companies, use both of them, and continue using any other servers they host or available online.&lt;/p&gt;
+&lt;p&gt;To use Flux servers enable them when the app offers it, or at any point later via Network &amp;amp; servers settings in the app.&lt;/p&gt;
+&lt;p&gt;When both SimpleX Chat and Flux servers are enabled, the app will use servers of both operators in each connection to receive messages and for &lt;a href=&quot;https://simplex.chat/blog/20240604-simplex-chat-v5.8-private-message-routing-chat-themes.html&quot;&gt;private message routing&lt;/a&gt;, increasing metadata privacy for all users.&lt;/p&gt;
+&lt;p&gt;Read more about why SimpleX network benefits from multiple operators in &lt;a href=&quot;https://simplex.chat/blog/20241125-servers-operated-by-flux-true-privacy-and-decentralization-for-all-users.html&quot;&gt;our previous post&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;You can also read about our plan &lt;a href=&quot;https://github.com/simplex-chat/simplex-chat/blob/stable/docs/rfcs/2024-04-26-commercial-model.md&quot;&gt;how network operators will make money&lt;/a&gt;, while continuing to protect users privacy, based on network design rather than on trust to operators, and without any cryptocurrency emission.&lt;/p&gt;
+&lt;h3 id=&quot;business-chats&quot; tabindex=&quot;-1&quot;&gt;Business chats&lt;/h3&gt;
+&lt;img src=&quot;https://simplex.chat/blog/images/20241210-business.png&quot; width=&quot;288&quot; class=&quot;float-to-right&quot; /&gt;
+&lt;p&gt;We use SimpleX Chat to provide support to SimpleX Chat users, and we also see some other companies offering SimpleX Chat as a support channel.&lt;/p&gt;
+&lt;p&gt;One of the problem of providing support via general purpose messengers is that the customers don&#39;t see who they talk to, as they can in all dedicated support systems.&lt;/p&gt;
+&lt;p&gt;It is not possible in most messengers, including SimpleX Chat prior to v6.2 - every new customer joins a one-to-one conversation, where the customers see that they talk to a company, not knowing who they talk to, and if it&#39;s a bot or a human.&lt;/p&gt;
+&lt;p&gt;The new business chats in SimpleX Chat solve this problem: to use them enable the toggle under the contact address in your chat profile. It is safe to do, and you can always toggle it off, if needed - the address itself does not change.&lt;/p&gt;
+&lt;p&gt;Once you do it, the app will be creating a new business chat with each connecting customer where multiple people can participate. Business chat is a hybrid of one-to-one and group conversation. In the list of chats you will see customer names and avatars, and the customer will see your business name and avatar, like with one-to-one conversations. But inside it works as a group, allowing customer to see who sent the message, and allowing you to add other participants from the business side, for delegation and escalation of customer questions.&lt;/p&gt;
+&lt;p&gt;This can be done manually, or you can automate these conversations using bots that can answer some customer questions and then add a human to the conversation when appropriate or requested by the customer. We will be offering more bot-related features to the app and a simpler way to program bots very soon - watch our announcements.&lt;/p&gt;
+&lt;h3 id=&quot;better-user-experience&quot; tabindex=&quot;-1&quot;&gt;Better user experience&lt;/h3&gt;
+&lt;img src=&quot;https://simplex.chat/blog/images/20241210-reactions.png&quot; width=&quot;288&quot; class=&quot;float-to-right&quot; /&gt;
+&lt;p&gt;&lt;strong&gt;Chat navigation&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;This has been a long-standing complaint from the users: &lt;em&gt;why does the app opens conversations on the last message, and not on the first unread message&lt;/em&gt;?&lt;/p&gt;
+&lt;p&gt;Android and desktop apps now open the chat on the first unread message. It will soon be done in the iOS app too.&lt;/p&gt;
+&lt;p&gt;Also, the app can scroll to the replied message anywhere in the conversation (when you tap it), even if it was sent a very long time ago.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;See who reacted!&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;This is a small but important change - you can now see who reacted to your messages!&lt;/p&gt;
+&lt;h3 id=&quot;improving-notifications-in-ios-app&quot; tabindex=&quot;-1&quot;&gt;Improving notifications in iOS app&lt;/h3&gt;
+&lt;p&gt;iOS notifications in a decentralized network is a complex problem. We &lt;a href=&quot;https://simplex.chat/blog/20220404-simplex-chat-instant-notifications.html#ios-notifications-require-a-server&quot;&gt;support iOS notifications&lt;/a&gt; from early versions of the app, focussing on preserving privacy as much as possible. But the reliability of notifications was not good enough.&lt;/p&gt;
+&lt;p&gt;We solved several problems of notification delivery in this release:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;messaging servers no longer lose notifications while notification servers are restarted.&lt;/li&gt;
+&lt;li&gt;Apple can drop notifications while your device is offline - about 15-20% of notifications are dropped because of it. The servers and the new version of the app work around this problem by delivering several last notifications, to show notifications correctly even when Apple drops them.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;With these changes the iOS notifications remained as private and secure as before. The notifications only contain metadata, without the actual messages, and even the metadata is end-to-end encrypted between SimpleX notification servers and the client device, inaccessible to Apple push notification servers.&lt;/p&gt;
+&lt;p&gt;There are two remaining problems we will solve soon:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;iOS only allows to use 25mb of device memory when processing notifications in the background. This limit didn&#39;t change for many years, and it is challenging for decentralized design. If the app uses more memory, iOS kills it and the notification is not shown – approximately 10% of notifications can be lost because of that.&lt;/li&gt;
+&lt;li&gt;for notifications to work, the app communicates with the notification server. If the user puts the app in background too quickly, the app may fail to enable notification for the new contacts. We plan to change clients and servers to delegate this task to messaging servers, to remove the need for this additional communication entirely, without any impact on privacy and security. This will happen early next year.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;simplex-network&quot; tabindex=&quot;-1&quot;&gt;SimpleX network&lt;/h2&gt;
+&lt;p&gt;Some links to answer the most common questions:&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://simplex.chat/blog/20220511-simplex-chat-v2-images-files.html#the-first-messaging-platform-without-user-identifiers&quot;&gt;How can SimpleX deliver messages without user identifiers&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://simplex.chat/blog/20220711-simplex-chat-v3-released-ios-notifications-audio-video-calls-database-export-import-protocol-improvements.html#why-having-users-identifiers-is-bad-for-the-users&quot;&gt;What are the risks to have identifiers assigned to the users&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/simplex-chat/simplex-chat#privacy-and-security-technical-details-and-limitations&quot;&gt;Technical details and limitations&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://simplex.chat/faq/index.html&quot;&gt;Frequently asked questions&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Please also see our &lt;a href=&quot;https://simplex.chat/&quot;&gt;website&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&quot;please-support-us-with-your-donations&quot; tabindex=&quot;-1&quot;&gt;Please support us with your donations&lt;/h2&gt;
+&lt;p&gt;Huge &lt;em&gt;thank you&lt;/em&gt; to everybody who donated to SimpleX Chat!&lt;/p&gt;
+&lt;p&gt;Prioritizing users privacy and security, and also raising the investment, would have been impossible without your support and donations.&lt;/p&gt;
+&lt;p&gt;Also, funding the work to transition the protocols to non-profit governance model would not have been possible without the donations we received from the users.&lt;/p&gt;
+&lt;p&gt;Our pledge to our users is that SimpleX protocols are and will remain open, and in public domain, so anybody can build the future implementations of the clients and the servers. We are building SimpleX platform based on the same principles as email and web, but much more private and secure.&lt;/p&gt;
+&lt;p&gt;Your donations help us raise more funds — any amount, even the price of the cup of coffee, makes a big difference for us.&lt;/p&gt;
+&lt;p&gt;See &lt;a href=&quot;https://github.com/simplex-chat/simplex-chat/#please-support-us-with-your-donations&quot;&gt;this section&lt;/a&gt; for the ways to donate.&lt;/p&gt;
+&lt;p&gt;Thank you,&lt;/p&gt;
+&lt;p&gt;Evgeny&lt;/p&gt;
+&lt;p&gt;SimpleX Chat founder&lt;/p&gt;
+</content>
+            <author>
+                <name>SimpleX Chat</name>
+                <email>chat@simplex.chat</email>
+            </author>
+        </entry>
+        <entry>
+            <id>https://simplex.chat/blog/20241218-oppose-digital-ids-they-break-law-lead-to-mass-scale-surveillance.html</id>
+            <!-- <updated>18 Dec 2024</updated> -->
+            <updated>2024-12-18T00:00:00Z</updated>
+            <link rel="alternate" type="text/html" href="https://simplex.chat/blog/20241218-oppose-digital-ids-they-break-law-lead-to-mass-scale-surveillance.html"/>
+            <title>Oppose digital IDs – they break the law and lead to mass scale surveillance</title>
+            <content type="html">&lt;h1 id=&quot;oppose-digital-ids-they-break-the-law-and-lead-to-mass-scale-surveillance&quot; tabindex=&quot;-1&quot;&gt;Oppose digital IDs – they break the law and lead to mass scale surveillance&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Published:&lt;/strong&gt; Dec 18, 2024&lt;/p&gt;
+&lt;img src=&quot;https://simplex.chat/blog/images/20241218-pub.jpg&quot; width=&quot;330&quot; class=&quot;float-to-right&quot; /&gt;
+&lt;p&gt;Starting next year, the UK government plans to introduce &lt;a href=&quot;https://www.telegraph.co.uk/politics/2024/12/08/digital-id-to-be-introduced-for-pubs-and-clubs/&quot;&gt;digital ID cards&lt;/a&gt; for the young people to prove their age when visiting pubs. While officials claim this system will remain optional, it&#39;s part of a broader government initiative to move more state functions online so that people can prove their identity for everything from paying taxes to opening a bank account using the government-backed app. This will be a step toward a society where every pub visit, purchase, and social interaction becomes a permanent digital record linked to a government-issued ID – a step to normalizing mass surveillance at scale.&lt;/p&gt;
+&lt;p&gt;Digital IDs are promoted as a way to fight law violations, and some politicians support them as &lt;a href=&quot;https://www.telegraph.co.uk/politics/2024/07/10/id-cards-inevitable-tackle-immigration-lord-blunkett-labour/&quot;&gt;a way to tackle illegal immigration&lt;/a&gt;. But digital IDs themselves break the law. Article 8 of the European Convention of Human Rights says: “Everyone has the right to respect for his private and family life”. It means that not only our right to privacy is enshrined in the law, but the right to have our privacy respected is also part of the law. Asking to present a digital ID when visiting a pub, even if it is optional, disrespects our privacy, and is therefore illegal.&lt;/p&gt;
+&lt;p&gt;Digital IDs would not stop people who decide to break laws. Pubs already can refuse to serve alcohol to young people and require the ID in case the age is in doubt. And illegal immigration can also be reduced without any digital IDs. But introducing digital IDs and collecting our actions, names and locations in one government-controlled database will result in making this information easier to access for criminals, and being exploited for financial and identity crimes.&lt;/p&gt;
+&lt;p&gt;What starts as a &amp;quot;convenient option&amp;quot; is likely to end as a mandatory requirement. The digital ID systems being pushed by governments and corporations aren&#39;t about making our lives easier. They&#39;re about tracking, monitoring, and controlling every move we make. And we can see &lt;a href=&quot;https://www.wired.com/story/china-social-credit-system-explained/&quot;&gt;where this road leads in China&lt;/a&gt;, when IDs and social scores created for convenience are used to prevent access to basic services and bank accounts as a punishment for legal social media posts that the government disagrees with. What started as a convenience, is now trialed &lt;a href=&quot;https://www.thesun.ie/news/13154812/china-installs-toilet-timers-to-broadcast-time-spent/&quot;&gt;to track the duration of public toilet visits&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The United Kingdom is a democratic country, and the law protects our right to privacy and freedom of speech. If we accept digital IDs as something required for simple things, like buying a drink, it leaves the door wide open to a range of privacy violations.&lt;/p&gt;
+&lt;p&gt;We call on everyone to oppose the digital ID systems. Do not use them. Do not install these systems in your pub, for as long as it is not legally required. Support local businesses that don’t use them. Protect your privacy and freedom by using software that respects them. Demand that your privacy is respected, as required by law.&lt;/p&gt;
+&lt;p&gt;To make your voice heard, email your MP expressing your rejection of digital IDs as a violation of European Convention of Human Rights in three simple steps:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Copy the text below&lt;/strong&gt; or &lt;a href=&quot;mailto:?subject=Please%20oppose%20the%20plan%20for%20Digital%20IDs&amp;amp;body=Dear%20%E2%80%A6%2C%0A%0AI%20object%20to%20the%20introduction%20of%20digital%20IDs%20in%20pubs%20or%20any%20other%20public%20places%20for%20these%20reasons%3A%0A%0A1.%20It%20violates%20the%20European%20Convention%20of%20Human%20Rights%2C%20article%208%3A%20%E2%80%9CEveryone%20has%20the%20right%20to%20respect%20for%20his%20private%20and%20family%20life%E2%80%9D%20(https%3A%2F%2Ffra.europa.eu%2Fen%2Flaw-reference%2Feuropean-convention-human-rights-article-8-0).%0AAsking%20to%20present%20digital%20IDs%20when%20proof%20of%20identity%20is%20not%20legally%20required%2C%20even%20if%20it%20is%20optional%2C%20disrespects%20our%20privacy%2C%20and%20is%20therefore%20illegal.%0A%0A2.%20It%20will%20not%20be%20an%20effective%20measure%20in%20reducing%20the%20violations%20of%20the%20law.%20People%20who%20want%20to%20circumvent%20it%2C%20will%20find%20a%20way.%0A%0A3.%20It%20will%20increase%20crime%2C%20because%20combining%20a%20large%20amount%20of%20private%20information%20in%20a%20single%20system%20increases%20the%20risks%20of%20this%20information%20becoming%20available%20to%20criminals%2C%20who%20will%20exploit%20it%20for%20financial%20crimes%20and%20identity%20theft.%0A%0AI%20kindly%20ask%20you%20to%20oppose%20this%20plan%2C%20both%20publicly%20and%20during%20any%20discussions%20in%20the%20UK%20Parliament.%0A%0ASincerely%20yours%2C%0A%E2%80%A6&quot;&gt;click this link&lt;/a&gt; to copy it into email app:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;em&gt;Dear …,&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;I object to the introduction of digital IDs in pubs or any other public places for these reasons:&lt;/em&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;em&gt;It violates the European Convention of Human Rights, article 8: “Everyone has the right to respect for his private and family life” (&lt;a href=&quot;https://fra.europa.eu/en/law-reference/european-convention-human-rights-article-8-0&quot;&gt;https://fra.europa.eu/en/law-reference/european-convention-human-rights-article-8-0&lt;/a&gt;).&lt;/em&gt;&lt;br /&gt;
+&lt;em&gt;Asking to present digital IDs when proof of identity is not legally required, even if it is optional, disrespects our privacy, and is therefore illegal.&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;It will not be an effective measure in reducing the violations of the law. People who want to circumvent it, will find a way.&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;It will increase crime, because combining a large amount of private information in a single system increases the risks of this information becoming available to criminals, who will exploit it for financial crimes and identity theft.&lt;/em&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;em&gt;I kindly ask you to oppose this plan, both publicly and during any discussions in the UK Parliament.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Sincerely yours,&lt;/em&gt;&lt;br /&gt;
+&lt;em&gt;…&lt;/em&gt;&lt;/p&gt;
+&lt;ol start=&quot;2&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https://members.parliament.uk/members/Commons&quot;&gt;&lt;strong&gt;Find the email address of your MP&lt;/strong&gt;&lt;/a&gt; and copy it to the email.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Fill in the blanks, edit the text if needed, and &lt;strong&gt;send it&lt;/strong&gt;!&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Public opposition changed government decisions in many cases.&lt;/p&gt;
+&lt;p&gt;It is your opportunity to tell the government which country you want to live in — please use it!&lt;/p&gt;
+</content>
+            <author>
+                <name>SimpleX Chat</name>
+                <email>chat@simplex.chat</email>
+            </author>
+        </entry>
+        <entry>
+            <id>https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html</id>
+            <!-- <updated>14 Jan 2025</updated> -->
+            <updated>2025-01-14T00:00:00Z</updated>
+            <link rel="alternate" type="text/html" href="https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html"/>
+            <title>SimpleX network: large groups and privacy-preserving content moderation</title>
+            <content type="html">&lt;h1 id=&quot;simplex-network-large-groups-and-privacy-preserving-content-moderation&quot; tabindex=&quot;-1&quot;&gt;SimpleX network: large groups and privacy-preserving content moderation&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Published:&lt;/strong&gt; Jan 14, 2025&lt;/p&gt;
+&lt;img src=&quot;https://simplex.chat/blog/images/20250114-locked-books.jpg&quot; width=&quot;345&quot; class=&quot;float-to-right&quot; /&gt;
+&lt;p&gt;Many people believe that it is impossible to moderate and prevent abuse in end-to-end encrypted conversations. This belief is incorrect — there is a way to prevent abuse and distribution of illegal content without any compromises to users&#39; privacy and security of end-to-end encryption.&lt;/p&gt;
+&lt;p&gt;Anti-privacy lobbyists use this incorrect belief to advocate for scanning of private communications, which not only would fail to prevent abuse, but would make it worse — because our private data will become available to criminals.&lt;/p&gt;
+&lt;p&gt;So it&#39;s very important to understand how privacy preserving content moderation works, and educate the politicians who you voted for, and who is currently in the office, that we do not need to compromise privacy and security in any way to substantially reduce online crime and abuse.&lt;/p&gt;
+&lt;p&gt;This post answers these questions:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Why &lt;a href=&quot;https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html#large-groups-on-simplex-network&quot;&gt;large groups on SimpleX network&lt;/a&gt; don&#39;t work well?&lt;/li&gt;
+&lt;li&gt;How do we plan to &lt;a href=&quot;https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html#can-large-groups-scale&quot;&gt;make them scale&lt;/a&gt;?&lt;/li&gt;
+&lt;li&gt;How do &lt;a href=&quot;https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html#preventing-abuse-with-anonymous-participation&quot;&gt;group owners prevent abuse&lt;/a&gt; when people participate anonymously?&lt;/li&gt;
+&lt;li&gt;How do server operators &lt;a href=&quot;https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html#preventing-server-abuse-without-compromising-e2e-encryption&quot;&gt;prevent abuse of their servers&lt;/a&gt; and &lt;a href=&quot;https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html#privacy-preserving-content-moderation&quot;&gt;how these measures will evolve&lt;/a&gt; without any compromises to privacy and end-to-end encryption?&lt;/li&gt;
+&lt;li&gt;Which &lt;a href=&quot;https://simplex.chat/blog/20250114-simplex-network-large-groups-privacy-preserving-content-moderation.html#privacy-and-security-improvements-we-plan-this-year&quot;&gt;privacy and security improvements&lt;/a&gt; we plan this year?&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;large-groups-on-simplex-network&quot; tabindex=&quot;-1&quot;&gt;Large groups on SimpleX network&lt;/h2&gt;
+&lt;p&gt;When we designed groups, we expected them to be used primarily for small groups where people know each other, with not more than 100 or so members.&lt;/p&gt;
+&lt;p&gt;But we learnt that people want to participate in public discussions remaining anonymous — it protects their freedom of speech. As an experiment, we are curating a small &lt;a href=&quot;https://simplex.chat/docs/directory.html&quot;&gt;directory of groups&lt;/a&gt; that currently has almost 400 public groups, with the largest ones having thousands of members. You can connect to this experimental directory via &lt;a href=&quot;https://simplex.chat/contact#/?v=2-4&amp;amp;smp=smp%3A%2F%2Fu2dS9sG8nMNURyZwqASV4yROM28Er0luVTx5X1CsMrU%3D%40smp4.simplex.im%2FeXSPwqTkKyDO3px4fLf1wx3MvPdjdLW3%23%2F%3Fv%3D1-2%26dh%3DMCowBQYDK2VuAyEAaiv6MkMH44L2TcYrt_CsX3ZvM11WgbMEUn0hkIKTOho%253D%26srv%3Do5vmywmrnaxalvz6wi3zicyftgio6psuvyniis6gco6bp6ekl4cqj4id.onion&quot;&gt;SimpleX chat address&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&quot;can-large-groups-scale&quot; tabindex=&quot;-1&quot;&gt;Can large groups scale?&lt;/h2&gt;
+&lt;p&gt;Currently the groups are fully decentralized, and every time you send the message to some group your client has to send it to each group member, which is very costly for traffic and battery in large groups.&lt;/p&gt;
+&lt;p&gt;We are currently working on the new group architecture when dedicated group members that run their clients on the server or on desktop with good internet connection will re-broadcast messages to all members — these members are &amp;quot;super-peers&amp;quot;.&lt;/p&gt;
+&lt;p&gt;We will be offering pre-configured super-peers via the app, and you will be able to use your own super-peers, in case you are hosting a large private group, and to have a better control and ownership of the group — e.g., if we decide to remove our super peer from the group, it will continue to function thanks to your super-peer re-broadcasting messages.&lt;/p&gt;
+&lt;p&gt;This new design improves both privacy of group participation and censorship resistance of the groups, and also makes abusing the group harder.&lt;/p&gt;
+&lt;h2 id=&quot;preventing-abuse-with-anonymous-participation&quot; tabindex=&quot;-1&quot;&gt;Preventing abuse with anonymous participation&lt;/h2&gt;
+&lt;p&gt;All public discussions are abused by spammers and trolls, whether anonymous or not. We have been evolving ability of group owners to moderate conversations by allowing to remove inappropriate and off-topic messages, to block members who send spam, and to make all new members who join their group unable to send messages until approved.&lt;/p&gt;
+&lt;p&gt;As support for large groups improves, we expect that the attempts to abuse may increase too, unless we add better moderation capabilities in advance.&lt;/p&gt;
+&lt;p&gt;v6.3 will add ability of the group members to send reports to the group owners and administrators — the beta version we just released adds ability to manage these reports, so group admins won&#39;t miss reports when members start sending them.&lt;/p&gt;
+&lt;p&gt;Other features that we plan to add this year to improve both usability and safety of the groups:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;message comments — some groups may choose to allow only comments, when ability to send messages is restricted to group owners or admins.&lt;/li&gt;
+&lt;li&gt;ability to limit the maximum number of messages the members can send per day.&lt;/li&gt;
+&lt;li&gt;ability to pre-moderate messages before they can be seen by all members.&lt;/li&gt;
+&lt;li&gt;&amp;quot;knocking&amp;quot; — approving new members before they can join the group.&lt;/li&gt;
+&lt;li&gt;sub-groups — smaller conversations with the same members.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;preventing-server-abuse-without-compromising-e2e-encryption&quot; tabindex=&quot;-1&quot;&gt;Preventing server abuse without compromising e2e encryption&lt;/h2&gt;
+&lt;p&gt;Some categories of content may be prohibited by servers operators. An extreme case would be child sexual abuse materials (CSAM).&lt;/p&gt;
+&lt;p&gt;Many people believe that when conversation is end-to-end encrypted, the problem is unsolvable. This incorrect belief is used by unscrupulous lobbyists and politicians who attempt to mandate various types of content scanning under the guise of preventing CSAM distribution.&lt;/p&gt;
+&lt;p&gt;We &lt;a href=&quot;https://simplex.chat/blog/20240601-protecting-children-safety-requires-e2e-encryption.html&quot;&gt;wrote before&lt;/a&gt; about how such measures not only would fail to solve the problem, but would make it worse. If our private photos become available to service providers, they will eventually become available to criminals too, and will be used to abuse and exploit the users and their children.&lt;/p&gt;
+&lt;p&gt;An absolute majority of CSAM distributed online is publicly accessible. Many large tech companies failed to act on it and to remove CSAM from their services before it became an epidemic. We see it as a very important objective to eliminate the possibility to distribute CSAM from publicly accessible groups, even if it hurts network growth.&lt;/p&gt;
+&lt;p&gt;When we receive a user complaint about CSAM shared in any group, we remove the files and, in some cases, the links to join the group from our servers. Our approach to moderation preserves user privacy and security of end-to-end encryption.&lt;/p&gt;
+&lt;p&gt;How does it work? Let&#39;s go over the process step by step.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;A user discovered the link to join the group that distributes CSAM and sent a complaint to our support email address or via the app to &lt;a href=&quot;simplex:/contact#/?v=1&amp;amp;smp=smp%3A%2F%2FPQUV2eL0t7OStZOoAsPEV2QYWt4-xilbakvGUGOItUo%3D%40smp6.simplex.im%2FK1rslx-m5bpXVIdMZg9NLUZ_8JBm8xTt%23MCowBQYDK2VuAyEALDeVe-sG8mRY22LsXlPgiwTNs9dbiLrNuA7f3ZMAJ2w%3D&quot;&gt;SimpleX Chat team&lt;/a&gt; contact.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Once we received the link to join the group, we instruct our automated bot to join it. If the complaint is confirmed as valid, the bot sends the information about the files sent in this group to the servers that store these files.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Once the servers receive the file identifiers from the bot, they block the files.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;File servers cannot look inside end-to-end encrypted files, and they don&#39;t even know file sizes — they are securely locked, and sent in chunks, across multiple servers. But if the bot that joined the group provides the address of the particular file, the server can delete this file. It doesn&#39;t allow the servers to access any other files.&lt;/p&gt;
+&lt;p&gt;In this way, the moderation is possible without any content scanning, and it preserves privacy and security of end-to-end encryption.&lt;/p&gt;
+&lt;h2 id=&quot;privacy-preserving-content-moderation&quot; tabindex=&quot;-1&quot;&gt;Privacy-preserving content moderation&lt;/h2&gt;
+&lt;p&gt;Right now, when we act on user complaints, we delete uploaded files or the links to join the groups from our servers, and to the users it looks as if something stopped working.&lt;/p&gt;
+&lt;p&gt;We are currently rolling out the change to the servers that would mark these files and group links as blocked, so that users who try to download them or to join blocked groups can see that they were blocked for violating server operator conditions of use. This will improve transparency of moderation and reliability of the network.&lt;/p&gt;
+&lt;p&gt;Later this year we plan to do more than that — client-side restrictions on the clients that violated conditions of use by uploading prohibited content.&lt;/p&gt;
+&lt;p&gt;How would it work? When the client discovers that the uploaded file was blocked, it may, optionally, depending on the information in the blocking record, disable further uploads from the app to the servers of the operator that blocked the file. Also, when the client that tried to receive the file sees that the file is blocked, it may also refuse to receive further files from the same group member via the same servers.&lt;/p&gt;
+&lt;p&gt;In this way, the servers can restrict the future actions of the users who violate the conditions of use, while preserving privacy and security of the users and content – even of those users who violated the conditions.&lt;/p&gt;
+&lt;p&gt;We discussed this plan with the users, and we really appreciate their feedback. The current plan is quite different from our initial ideas, the users had a real impact. Users asked the questions below.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Can&#39;t users modify their clients code to circumvent these restrictions?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Yes, they can, but for this to work both sender and recipient would have to modify their clients. It&#39;s technically complex, so most users won&#39;t do it, and it is also hard to coordinate between users who don&#39;t know and don&#39;t trust each other.&lt;/p&gt;
+&lt;p&gt;So these measures would be effective, even though they can be in theory circumvented, as any restrictions can be.&lt;/p&gt;
+&lt;p&gt;Other services that identify users reduce abuse by blocking the user account. It is even easier to circumvent than changing the client code, and yet these measures reduce abuse.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Can&#39;t users use other servers?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Yes, they can. But in the same way as web browser is not responsible for the content you can access, SimpleX app should not restrict your communications with other servers based on blocking action from just one server.&lt;/p&gt;
+&lt;p&gt;That approach allows different server operators to have different content policies, depending on their jurisdiction and other factors. It also prevents the possibility of abuse by server operators.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Wouldn&#39;t these measures be abused?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;With the proposed changes, server operators will only be able to prevent uploads to their own servers, which prevents any impact on other communications.&lt;/p&gt;
+&lt;p&gt;In the future we plan to increase the resilience to any server malfunction or abuse by using multiple different servers with each contact.&lt;/p&gt;
+&lt;p&gt;If servers were to apply any upload restrictions unreasonably, the users would simply stop using them.&lt;/p&gt;
+&lt;p&gt;At the same time, server operators need to have technical means to protect their servers from users&#39; abuse, and the proposed client-side restrictions achieve it.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;What additional measures are considered?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;We published other technical ideas that could be used to prevent distribution of illegal content in &lt;a href=&quot;https://github.com/simplex-chat/simplex-chat/blob/stable/docs/rfcs/2024-12-30-content-moderation.md&quot;&gt;this document&lt;/a&gt;. None of these measures compromise users&#39; privacy or end-to-end encryption, and they can (and should) only be applied to publicly accessible content that other users complained about.&lt;/p&gt;
+&lt;p&gt;We technically cannot, and we won&#39;t scan all content. We actively &lt;a href=&quot;https://simplex.chat/blog/20240704-future-of-privacy-enforcing-privacy-standards.html&quot;&gt;campaign against any content-scanning proposals&lt;/a&gt;, because it violates our right to privacy, and it would result in huge increase of online crime.&lt;/p&gt;
+&lt;p&gt;The belief that it is impossible to moderate conversations when they are e2e encrypted is incorrect. It is possible when users themselves share conversation contents with server operators, in which case the operators can identify and, if necessary, remove this content. It is also possible to moderate conversations that users made publicly accessible.&lt;/p&gt;
+&lt;h2 id=&quot;send-us-comments-and-questions&quot; tabindex=&quot;-1&quot;&gt;Send us comments and questions&lt;/h2&gt;
+&lt;p&gt;Let us know any comments and feedback to the proposed measures. This is still an evolving design, and it won&#39;t be implemented until later this year.&lt;/p&gt;
+&lt;p&gt;Your comments will help to find the right balance between users&#39; and server operators&#39; requirements.&lt;/p&gt;
+&lt;h2 id=&quot;privacy-and-security-improvements-we-plan-this-year&quot; tabindex=&quot;-1&quot;&gt;Privacy and security improvements we plan this year&lt;/h2&gt;
+&lt;p&gt;To increase privacy and security we plan to add this year:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;quantum-resistant e2e encryption in small groups.&lt;/li&gt;
+&lt;li&gt;receiving proxy for files, to protect users IP addresses and other transport metadata from file senders&#39; servers.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We see privacy and security as necessary for online safety, and prevention of abuse. If you don&#39;t already use SimpleX network, try it now, and let us know what you need to make it better.&lt;/p&gt;
 </content>
             <author>
                 <name>SimpleX Chat</name>
