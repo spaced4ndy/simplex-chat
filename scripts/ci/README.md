@@ -28,6 +28,8 @@ gh workflow run android-emu.yml --ref <branch> -f tests="private-notes"
 
 A newer run of a workflow on the same branch cancels the older one.
 
+A failed feature test fails the app job, so a run that also asks for Claude skips the Claude job: start it with `tests: none` to run Claude anyway.
+
 ## How long a run takes
 
 | Run | iOS | Desktop | Android |
