@@ -12,8 +12,7 @@ set -euo pipefail
 
 app=$1
 export UI_OUT=$2
-bundle_id=chat.simplex.app
-ui=$(dirname "$0")/ui
+. "$(dirname "$0")/lib.sh"
 mkdir -p "$UI_OUT"
 
 axe --version
