@@ -5,9 +5,7 @@
 # For an app in the derived data of a build, it then renders the previews of the SimpleX Snapshots tests to the snapshots
 # folder of the output dir (snapshots.sh).
 # Usage: scripts/ci/ios-sim/smoke-test.sh <path to SimpleX.app> <output dir>
-# Each step saves a screenshot and an accessibility tree to the output dir and prints the tree to the log. What the
-# screens show is checked without stopping: every check is listed in checks.txt and the job summary, and the test fails
-# at the end if any failed.
+# Each step saves a screenshot and an accessibility tree to the output dir and prints the tree to the log.
 # Later steps of the job get SIM_UDID and UI_OUT, with the simulator still running.
 
 set -euo pipefail
