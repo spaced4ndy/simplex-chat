@@ -182,3 +182,11 @@ Each run uploads the app it built, for manual tests, as an artifact kept 14 days
 ## The Claude job
 
 It needs the GitHub environment `app-sim-claude` with the secret `CLAUDE_CODE_OAUTH_TOKEN`, a Claude subscription token. The environment's branch rule alone decides which branches may use it: on a branch it doesn't allow, a run that asks for Claude fails at the Claude job's environment check, and the scripted test runs as usual. Each run spends the subscription's usage limits; the job summary gives its tokens and cost estimated at API prices.
+
+Each workflow's `claude-scope` lists the sessions (`sessions:`, one session `main` unless set), each with its cases and plan, and how many run at once (`parallel:`, 1 unless set). Each session runs in its own job, with its own simulator or emulator, app and test backend, within the turns, budget and minutes the scope sets; the job's time limit is 330 minutes. Claude's Bash runs only three helpers, one command per call (`claude-guard.py`):
+
+- `ui`, the platform's UI driver;
+- `record`, which appends each case's result (ok, bug, blocked or manual, a note and a screenshot's name) to the session's `results.tsv` as the session goes, so a session that is cut short keeps what it finished;
+- `peer`, when the test backend runs: CLI clients of the backend's `simplex-chat`, each with its own database, created on first use and online while one of its commands runs. Its commands connect to the app's links or create links for the app, send messages, replies, reactions, edits, deletions, images, files from `tests/fixtures`, text files and voice messages, and create and manage groups; each builds one CLI command from checked arguments, so a session cannot make a peer read or write other files. `peer` alone lists them.
+
+A session's files, results and transcript are uploaded, as `ios-sim-claude-test-<session>`, `desktop-claude-test-<session>` or `android-claude-test-<session>`, once they are checked for the token, also when the session reached its time limit.
