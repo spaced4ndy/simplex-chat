@@ -1,14 +1,17 @@
 #!/bin/bash
 
-# Watches the badges screen while the core credits a prepaid badge and lets it lapse, over and over, and checks that the
-# screen draws the page its accessibility tree lists: "Your badge" or the Support SimpleX page. The core starts the
-# cycles on the chat console's /badge test_cycles <cycles> <seconds without a badge> <seconds with one> (test builds
-# only); this script reinstalls the app, takes it through onboarding, sends that from the console and opens Settings >
-# Supporter perks. BADGE_CYCLES_SETTINGS, settings as ui start takes them, restarts the app with them first.
+# Watches the badges screen while its page changes, over and over, and checks that the screen draws the page its
+# accessibility tree lists: Your badge, Issuing your badge or Support SimpleX. Both ways of changing it need test builds:
+# - console, the default: the chat console's /badge test_cycles <cycles> <seconds without a badge> <seconds with one>
+#   makes the core credit a prepaid badge and let it lapse;
+# - purchase (BADGE_CYCLES_MODE=purchase): each cycle buys one month through the app's test products, which shows
+#   Issuing your badge until the core credits the test purchase, then the badge lapses.
+# This script reinstalls the app, takes it through onboarding and opens Settings > Supporter perks.
+# BADGE_CYCLES_SETTINGS, settings as ui start takes them, restarts the app with them first.
 # Every reading keeps its screenshot, tree and text in <output dir>/readings, and readings.log has the page the tree
-# lists and the page drawn: support when the Support page's wide blue button is drawn, blank when the middle of the
-# screen is one colour (ink below MIN_INK), badge otherwise. A change of the listed page is a transition; it fails when
-# a reading after its first (which can be taken mid-change) draws another page or nothing. transitions.log has each one.
+# lists and the page the screenshot shows, read by OCR: blank when the middle of the screen is one colour (ink below
+# MIN_INK), unread when OCR finds no page. A change of the listed page is a transition; it fails when a reading after
+# its first (which can be taken mid-change) draws another page or nothing. transitions.log has each one.
 # Usage: scripts/ci/android/badge-cycles.sh <apk> <output dir> [cycles] [seconds without] [seconds with]
 
 set -euo pipefail
@@ -19,6 +22,7 @@ cycles=${3:-40}
 hidden_secs=${4:-10}
 shown_secs=${5:-10}
 min_ink=${MIN_INK:-0.02}
+mode=${BADGE_CYCLES_MODE:-console}
 package=chat.simplex.app
 here=$(dirname "$0")
 ui=$here/ui
@@ -46,31 +50,30 @@ normalise() {
   tr -cd '[:alnum:]' <<< "$1" | tr '[:upper:]' '[:lower:]'
 }
 
-# the page the tree lists, from the text of one reading: badge, support or none
-listed_page_of() {
+# the page a text shows: issuing, badge, support or none; the issuing title contains "your badge", so it is checked first
+page_of_text() {
   local text
-  text=$(normalise "$(cut -d ' ' -f 2- "$1")")
+  text=$(normalise "$1")
   case "$text" in
+    *"$(normalise "Issuing your badge")"*) echo issuing ;;
     *"$(normalise "Your badge")"* | *"$(normalise "shown on your profile")"*) echo badge ;;
-    *"$(normalise "Get a badge to send larger files")"*) echo support ;;
+    *"$(normalise "Get a badge to send")"*) echo support ;;
     *) echo none ;;
   esac
 }
 
-# Prints "<page> <ink> <blue>": ink is the spread of grey levels between the bars, which ImageMagick reads as nan when
-# there is none; blue is how much bluer than red the place of the Support page's button is.
+# Prints "<page> <ink>": the page OCR reads on the screenshot, or blank when the spread of grey levels between the bars,
+# which ImageMagick reads as nan when there is none, is below MIN_INK, or unread.
 drawn_page_of() {
-  local w h ink blue page=badge
+  local w h ink page
   read -r w h < <(identify -format '%w %h\n' "$1")
   ink=$(convert "$1" -alpha off -crop "${w}x$((h * 6 / 10))+0+$((h * 15 / 100))" +repage -colorspace Gray -format '%[fx:standard_deviation]' info:)
-  blue=$(convert "$1" -alpha off -crop "$((w * 55 / 100))x$((h * 4 / 100))+$((w * 22 / 100))+$((h * 78 / 100))" +repage -format '%[fx:mean.b-mean.r]' info:)
   case "$ink" in *nan*) ink=0 ;; esac
-  if awk -v ink="$ink" -v min="$min_ink" 'BEGIN { exit !(ink < min) }'; then
-    page=blank
-  elif awk -v blue="$blue" 'BEGIN { exit !(blue > 0.4) }'; then
-    page=support
+  page=$(page_of_text "$(tesseract "$1" stdout 2> /dev/null)")
+  if [ "$page" = none ]; then
+    if awk -v ink="$ink" -v min="$min_ink" 'BEGIN { exit !(ink < min) }'; then page=blank; else page=unread; fi
   fi
-  echo "$page $ink $blue"
+  echo "$page $ink"
 }
 
 open_settings() {
@@ -131,14 +134,29 @@ start_cycles() {
   back_to_settings
 }
 
-start_cycles
-scroll_up_to_click "Supporter perks"
+# one month through the test products: Support SimpleX > Choose your badge > Supporter > 1 month > Pay
+buy_badge() {
+  "$ui" click-text "Choose your badge" 10
+  "$ui" click-text "Continue" 10
+  "$ui" click-text "1 month" 10
+  "$ui" click-text "Continue" 10
+  "$ui" click-text "Pay \$7.00" 10
+}
+
+if [ "$mode" = purchase ]; then
+  open_settings
+  scroll_to_click "Supporter perks"
+else
+  start_cycles
+  scroll_up_to_click "Supporter perks"
+fi
 "$ui" shot badges-open
 
 pages=0
 transitions=0
 failed=0
 blank=0
+listed_before=""
 listed_now=""
 since=""
 drawn_since_first=""
@@ -157,7 +175,7 @@ judge_transition() {
       verdict="drew another page"
     fi
   done
-  echo "$since to $listed_now: $verdict, drawn:$drawn_since_first" >> "$out/transitions.log"
+  echo "$since ${listed_before:-opened}>$listed_now: $verdict, drawn:$drawn_since_first" >> "$out/transitions.log"
   [ "$pages" -gt 1 ] || return 0
   transitions=$((transitions + 1))
   [ "$verdict" = ok ] || failed=$((failed + 1))
@@ -165,29 +183,58 @@ judge_transition() {
 }
 
 n=0
-deadline=$((SECONDS + cycles * (hidden_secs + shown_secs) + 60))
-while [ "$SECONDS" -lt "$deadline" ]; do
+listed=""
+read_screen() {
+  local reading now drawn ink
   n=$((n + 1))
   reading=$readings/$(printf '%04d' "$n")
   UI_OUT=$reading "$ui" shot reading > /dev/null
-  listed=$(listed_page_of "$reading/01-reading.txt")
-  read -r drawn ink blue <<< "$(drawn_page_of "$reading/01-reading.png")"
+  listed=$(page_of_text "$(cut -d ' ' -f 2- "$reading/01-reading.txt")")
+  read -r drawn ink <<< "$(drawn_page_of "$reading/01-reading.png")"
   mv "$reading" "$reading-$listed-$drawn"
   now=$(date -u +%H:%M:%S)
-  echo "$now reading $n: listed $listed, drawn $drawn, ink $ink, blue $blue" >> "$out/readings.log"
+  echo "$now reading $n: listed $listed, drawn $drawn, ink $ink" >> "$out/readings.log"
   if [ "$listed" != "$listed_now" ]; then
     judge_transition
+    listed_before=$listed_now
     listed_now=$listed
     since=$now
     drawn_since_first=""
   else
     drawn_since_first+=" $drawn"
   fi
-done
+}
+
+# a purchase cycle reads until the badge has come and gone, and three readings of Support SimpleX judge its return
+read_purchase_cycle() {
+  local seen_badge="" support_after=0 started=$SECONDS
+  while [ $((SECONDS - started)) -lt 90 ] && [ "$support_after" -lt 3 ]; do
+    read_screen
+    [ "$listed" != badge ] || seen_badge=yes
+    if [ -n "$seen_badge" ] && [ "$listed" = support ]; then support_after=$((support_after + 1)); fi
+  done
+}
+
+if [ "$mode" = purchase ]; then
+  for c in $(seq "$cycles"); do
+    "$ui" wait "Choose your badge" 30
+    buy_badge
+    echo "$(date -u +%H:%M:%S) bought $c" >> "$out/readings.log"
+    # the purchase screens close once the purchase is held; the badges screen under them is not composed until then
+    "$ui" wait "Issuing your badge" 20 || true
+    read_purchase_cycle
+  done
+else
+  deadline=$((SECONDS + cycles * (hidden_secs + shown_secs) + 60))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    read_screen
+  done
+fi
 judge_transition
 "$ui" key BACK
 
-summary="badge cycles: $transitions transitions on the open screen in $n readings; $failed drew another page or nothing, $blank of them nothing"
+kinds=$(sed -n 's/^[0-9:]* \([a-z]*>[a-z]*\): \([^,]*\),.*/\1 \2/p' "$out/transitions.log" | sort | uniq -c | sed 's/^ *//' | paste -sd ';' -)
+summary="badge cycles ($mode): $transitions transitions on the open screen in $n readings; $failed drew another page or nothing, $blank of them nothing; by kind: $kinds"
 echo "$summary"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   {

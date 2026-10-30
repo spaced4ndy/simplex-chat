@@ -199,8 +199,8 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpulse0 libegl1 imagemagick sqlite3 fonts-dejavu-core
-          dpkg-query -W libpulse0 libegl1 imagemagick sqlite3 fonts-dejavu-core
+          sudo apt-get install -y libpulse0 libegl1 imagemagick sqlite3 fonts-dejavu-core tesseract-ocr
+          dpkg-query -W libpulse0 libegl1 imagemagick sqlite3 fonts-dejavu-core tesseract-ocr
 
       - name: Download core library
         uses: actions/download-artifact@v8
@@ -299,7 +299,9 @@ jobs:
 
       - name: Run badge screen cycles
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: scripts/ci/android/badge-cycles.sh "$RUNNER_TEMP/apk/$APK" "$RUNNER_TEMP/badge-cycles" 31
+        env:
+          BADGE_CYCLES_MODE: purchase
+        run: scripts/ci/android/badge-cycles.sh "$RUNNER_TEMP/apk/$APK" "$RUNNER_TEMP/badge-cycles" 10
 
       - name: Upload badge screen cycles
         if: ${{ !cancelled() }}
