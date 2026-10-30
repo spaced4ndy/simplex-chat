@@ -11,19 +11,35 @@ import os
 import re
 import sys
 
-# nothing that substitutes, expands with $ or escapes
-HELPER_COMMAND = re.compile(r"(ui|peer|record)( [^$`\\\r\n]*)?")
-# and, outside quotes, nothing that chains, pipes, redirects or starts a subshell, and no glob, brace or tilde
-# expansion, which could turn names of files the session creates into arguments; QUOTED finds the shell's quotes
-# only because HELPER_COMMAND refuses backslashes
-UNQUOTED_SPECIAL = re.compile(r"[;&|<>()*?\[\]{}~]")
-QUOTED = re.compile(r"\"[^\"]*\"|'[^']*'")
+HELPER_COMMAND = re.compile(r"(ui|peer|record)( .*)?", re.DOTALL)
+# no escapes or line breaks anywhere, so the quotes are found by reading left to right; outside quotes nothing that
+# chains, pipes, redirects, starts a subshell, substitutes, or expands globs, braces or tildes, which could turn names
+# of files the session creates into arguments; inside double quotes no substitution
+REFUSED_ANYWHERE = set("\\\r\n")
+REFUSED_UNQUOTED = set(";&|<>()*?[]{}~$`")
+REFUSED_DOUBLE_QUOTED = set("$`")
+
+
+def plain_arguments(command):
+    quote = None
+    for c in command:
+        if c in REFUSED_ANYWHERE:
+            return False
+        if quote is None:
+            if c in REFUSED_UNQUOTED:
+                return False
+            if c in "'\"":
+                quote = c
+        elif c == quote:
+            quote = None
+        elif quote == '"' and c in REFUSED_DOUBLE_QUOTED:
+            return False
+    return quote is None
+
 
 call = json.load(sys.stdin)
 command = (call.get("tool_input") or {}).get("command", "").strip()
-allowed = call.get("tool_name") != "Bash" or (
-    HELPER_COMMAND.fullmatch(command) and not UNQUOTED_SPECIAL.search(QUOTED.sub("", command))
-)
+allowed = call.get("tool_name") != "Bash" or (HELPER_COMMAND.fullmatch(command) and plain_arguments(command))
 if os.environ.get("CLAUDE_GUARD_LOG"):
     with open(os.environ["CLAUDE_GUARD_LOG"], "a") as log:
         log.write(f"{'allow' if allowed else 'refuse'} {call.get('tool_name')}: {command[:200]!r}\n")
