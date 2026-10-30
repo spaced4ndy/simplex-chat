@@ -20,6 +20,7 @@
 #   ui point <x> <y>                print the element at this point, also when it belongs to a system alert that the tree misses
 #   ui layout <reachable|top>       restart the app with the one-hand UI (reachable toolbar) or the top bar
 #   ui relaunch                     restart the app
+#   ui open-link <link>             open a SimpleX link as another app would, e.g. a browser
 #   ui text-size <category>         set Dynamic Type: medium (the default), large, extra-large, extra-extra-large,
 #                                   extra-extra-extra-large, accessibility-medium ... accessibility-extra-extra-extra-large
 #   ui directory <stop|start>       stop or start the test directory (searches fail while it is stopped)
@@ -242,12 +243,20 @@ case "${1:-}" in
   point) point "$2" "$3" ;;
   layout) layout "$2" ;;
   relaunch) launch true ;;
+  open-link)
+    if ! [[ "$2" =~ ^(https://|simplex:/)[A-Za-z0-9_./:?\&=%+@~#-]+$ ]]; then
+      echo "error: \"$2\" is not a link"
+      exit 1
+    fi
+    xcrun simctl openurl "$SIM_UDID" "$2"
+    sleep 2
+    ;;
   text-size) text_size "$2" ;;
   directory) directory "$2" ;;
   listings) backend listings ;;
   requests) requests ;;
   *)
-    sed -n '3,27s/^# \{0,1\}//p' "$0"
+    sed -n '3,28s/^# \{0,1\}//p' "$0"
     exit 1
     ;;
 esac

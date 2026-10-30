@@ -22,6 +22,8 @@
 #   ui layout <reachable|top>     restart the app with the reachable toolbar (the one-hand UI, the default) or the top bar
 #   ui relaunch                   restart the app and wait for the chat list
 #   ui text-size <scale>          set the system font scale: 1 is the default, 1.3 and 2 are larger
+#   ui network <on|off>           turn the emulator's network on or off (airplane mode)
+#   ui open-link <link>           open a SimpleX link as another app would, e.g. a browser
 #   ui do <command> [args] -- <command> [args] ...
 #                                 run the commands in order, stopping at the first that fails
 #   ui stop                       stop the app and logcat
@@ -317,6 +319,25 @@ case "${1:-}" in
     number "$2"
     adb shell settings put system font_scale "$2"
     log "text-size $2"
+    ;;
+  network)
+    case "$2" in
+      on) adb shell cmd connectivity airplane-mode disable ;;
+      off) adb shell cmd connectivity airplane-mode enable ;;
+      *)
+        echo "error: network on or off"
+        exit 1
+        ;;
+    esac
+    log "network $2"
+    ;;
+  open-link)
+    if ! [[ "$2" =~ ^(https://|simplex:/)[A-Za-z0-9_./:?\&=%+@~#-]+$ ]]; then
+      echo "error: \"$2\" is not a link"
+      exit 1
+    fi
+    adb shell am start -W -a android.intent.action.VIEW -d "'$2'"
+    log "open-link $2"
     ;;
   do)
     shift
