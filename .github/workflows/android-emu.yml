@@ -404,8 +404,10 @@ jobs:
             adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file:///sdcard/Pictures/$image"
           done
 
+      # only the test SMP server's own cases need it, so the session runs without it rather than not at all
       - name: Reach the test backend
         if: steps.backend.outcome == 'success'
+        continue-on-error: true
         run: scripts/ci/android/emulator.sh reverse 5223
 
       # the helpers go on every shell's PATH, where Claude's Bash tool finds them whatever environment it builds
