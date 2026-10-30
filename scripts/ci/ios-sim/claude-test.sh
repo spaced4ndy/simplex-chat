@@ -1,11 +1,13 @@
 #!/bin/bash
 
-# Runs the device test plan with Claude Code on this runner after the smoke test, one session per layout,
-# as claude-scope says. A session drives the app only through the ui helper, and reads and writes only its
-# own directory, which ends up in <output dir>/<layout>: prompt.md, report.md, shots/, transcript.jsonl (stream-json).
-# It passes when every session's final message ends with "CLAUDE-TEST: PASS".
+# Runs one session of the device test plan with Claude Code on this runner after the smoke test: the session
+# CLAUDE_SESSION of claude-scope, with its layout, cases and plan. The session drives the app only through the ui, peer
+# and record helpers, and reads and writes only its own directory, which ends up in <output dir>/<session>: prompt.md,
+# report.md, results.tsv, shots/, transcript.jsonl (stream-json).
+# It passes when the session's final message ends with "CLAUDE-TEST: PASS".
 # Usage: scripts/ci/ios-sim/claude-test.sh <output dir>
-# Needs CLAUDE_CODE_OAUTH_TOKEN, SIM_UDID (the booted simulator with the app) and, when the test backend runs, BACKEND_DIR.
+# Needs CLAUDE_CODE_OAUTH_TOKEN, CLAUDE_SESSION, SIM_UDID (the booted simulator with the app) and, when the test backend
+# runs, BACKEND_DIR.
 
 set -euo pipefail
 
@@ -20,6 +22,7 @@ staging=$out.sessions
 mkdir -p "$staging"
 dir=$(cd "$(dirname "$0")" && pwd)
 : "${SIM_UDID:?SIM_UDID must be the simulator UDID}"
+name=${CLAUDE_SESSION:?CLAUDE_SESSION must be a session of claude-scope}
 BACKEND_DIR=${BACKEND_DIR:-}
 
 scope() {
@@ -27,11 +30,15 @@ scope() {
 }
 
 model=$(scope model)
-layouts=$(scope layouts)
+layout=$(scope "layout-$name")
+layout=${layout:-reachable}
+plan=$(scope "plan-$name")
 max_turns=$(scope max-turns)
 max_budget=$(scope max-budget-usd)
+max_minutes=$(scope max-minutes)
+: "${max_minutes:?claude-scope must set max-minutes}"
 
-export PATH="$dir:$PATH" BACKEND_DIR APP_LOG=$out/app.log CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+export PATH="$dir:$(dirname "$dir"):$PATH" BACKEND_DIR APP_LOG=$out/app.log CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 PLATFORM=ios
 if [ -n "$BACKEND_DIR" ]; then
   cp "$BACKEND_DIR/seed.md" "$out/seed.md"
 fi
@@ -52,7 +59,6 @@ layout_name() {
 }
 
 write_prompt() {
-  local layout=$1 previous=$2
   cat "$dir/claude-prompt.md"
   echo
   echo "## The ui commands"
@@ -61,12 +67,27 @@ write_prompt() {
   ui || true
   echo '```'
   echo
+  echo "## Recording results"
+  echo
+  echo '```'
+  record
+  echo '```'
+  echo
+  if [ -n "$BACKEND_DIR" ]; then
+    echo "## The peer commands"
+    echo
+    echo '```'
+    peer || true
+    echo '```'
+    echo
+  fi
   echo "## This session"
   echo
+  echo "- Session: $name."
   echo "- Layout: $(layout_name "$layout")."
-  echo "- Cases: $(scope "cases-$layout")."
+  echo "- Cases: $(scope "cases-$name")."
   local entries
-  entries=$(scope "entries-$layout")
+  entries=$(scope "entries-$name")
   if [ -n "$entries" ]; then
     echo "- Entries to use: $entries."
   fi
@@ -76,86 +97,78 @@ write_prompt() {
   else
     echo "- No test backend runs in this session."
   fi
-  if [ -z "$previous" ]; then
-    echo "- At the start: the smoke test onboarded a profile (typed as \"citester\"; the keyboard may have autocorrected the name) and checked the chat list in both layouts; the profile has no conversations."
-  else
-    echo "- At the start: an earlier session ran the cases in $(layout_name "$previous") on this app, so the profile may have chats, other profiles may exist and hints may be changed; look at the state first."
-  fi
-  echo "- Limits: $max_turns turns and \$$max_budget (estimated at API prices). Keep report.md current as you go."
+  echo "- At the start: the smoke test onboarded a profile (typed as \"citester\"; the keyboard may have autocorrected the name) and checked the chat list in both layouts; the profile has no conversations."
+  echo "- Limits: $max_turns turns, \$$max_budget (estimated at API prices) and $max_minutes minutes. Keep report.md and the results current as you go."
   echo
   if [ -n "$BACKEND_DIR" ]; then
     cat "$out/seed.md"
     echo
   fi
-  cat "$dir/device-test-plan.md"
+  cat "$dir/${plan:-device-test-plan.md}"
 }
 
+session=$staging/$name
+mkdir -p "$session/shots"
+echo "$name" >> "$out/sessions"
+ui layout "$layout"
+RESULTS=$session/results.tsv
+export RESULTS
+write_prompt > "$session/prompt.md"
+echo "::group::Claude session: $name, $layout, $model, $max_turns turns, \$$max_budget, $max_minutes minutes"
 status=0
-previous=""
-for layout in $layouts; do
-  session=$staging/$layout
-  mkdir -p "$session/shots"
-  echo "$layout" >> "$out/sessions"
-  ui layout "$layout"
-  write_prompt "$layout" "$previous" > "$session/prompt.md"
-  echo "::group::Claude session: $layout, $model, $max_turns turns, \$$max_budget"
-  session_status=0
-  # outside the session's directory, so the session cannot change it
-  export CLAUDE_GUARD_LOG=$staging/$layout-guard.log
-  : > "$CLAUDE_GUARD_LOG"
-  (
-    cd "$session"
-    UI_OUT=$session/shots CLAUDE_CODE_OAUTH_TOKEN=$token claude -p \
-      --model "$model" \
-      --effort high \
-      --restricted \
-      --tools Bash,Read,Write,Edit \
-      --allowedTools "Bash(ui)" "Bash(ui *)" "Read(/$session/**)" "Edit(/$session/**)" \
-      --permission-mode dontAsk \
-      --permission-prompts none \
-      --strict-mcp-config \
-      --max-turns "$max_turns" \
-      --max-budget-usd "$max_budget" \
-      --autocompact 200k \
-      --no-session-persistence \
-      --settings "$settings" \
-      --output-format stream-json \
-      --verbose \
-      < prompt.md > transcript.jsonl 2> stderr.log
-  ) || session_status=$?
-  echo "claude exited with $session_status"
-  # the token must never be printed or uploaded, whatever the session did; grep reads it from a pipe, not from its arguments
-  leak=0
-  grep -rqF -f <(printf '%s\n' "$token") "$session" "$CLAUDE_GUARD_LOG" || leak=$?
-  if [ "$leak" -ne 1 ]; then
-    rm -rf "$session" "$CLAUDE_GUARD_LOG"
-    echo "::error::the $layout session's files contain the token, or checking for it failed (grep exited $leak), so they were deleted before the upload"
-    session_status=1
+# outside the session's directory, so the session cannot change it
+export CLAUDE_GUARD_LOG=$staging/$name-guard.log
+: > "$CLAUDE_GUARD_LOG"
+# the alarm ends claude within the session's minutes, so its files are checked and moved before the step's time limit
+(
+  cd "$session"
+  UI_OUT=$session/shots CLAUDE_CODE_OAUTH_TOKEN=$token perl -e 'alarm shift; exec @ARGV' "$((max_minutes * 60))" claude -p \
+    --model "$model" \
+    --effort high \
+    --restricted \
+    --tools Bash,Read,Write,Edit \
+    --allowedTools "Bash(ui)" "Bash(ui *)" "Bash(peer)" "Bash(peer *)" "Bash(record)" "Bash(record *)" "Read(/$session/**)" "Edit(/$session/**)" \
+    --permission-mode dontAsk \
+    --permission-prompts none \
+    --strict-mcp-config \
+    --max-turns "$max_turns" \
+    --max-budget-usd "$max_budget" \
+    --autocompact 200k \
+    --no-session-persistence \
+    --settings "$settings" \
+    --output-format stream-json \
+    --verbose \
+    < prompt.md > transcript.jsonl 2> stderr.log
+) || status=$?
+echo "claude exited with $status"
+# the token must never be printed or uploaded, whatever the session did; grep reads it from a pipe, not from its arguments
+leak=0
+grep -rqF -f <(printf '%s\n' "$token") "$session" "$CLAUDE_GUARD_LOG" || leak=$?
+if [ "$leak" -ne 1 ]; then
+  rm -rf "$session" "$CLAUDE_GUARD_LOG"
+  echo "::error::the $name session's files contain the token, or checking for it failed (grep exited $leak), so they were deleted before the upload"
+  status=1
+else
+  mv "$session" "$CLAUDE_GUARD_LOG" "$out/"
+  session=$out/$name
+  CLAUDE_GUARD_LOG=$out/$name-guard.log
+  tail -n 20 "$session/stderr.log"
+  if [ -f "$session/report.md" ]; then
+    cat "$session/report.md"
   else
-    mv "$session" "$CLAUDE_GUARD_LOG" "$out/"
-    session=$out/$layout
-    CLAUDE_GUARD_LOG=$out/$layout-guard.log
-    tail -n 20 "$session/stderr.log"
-    if [ -f "$session/report.md" ]; then
-      cat "$session/report.md"
-    else
-      echo "no report.md"
-    fi
-    echo "guard hook: $(grep -c '^allow' "$CLAUDE_GUARD_LOG" || true) allowed, $(grep -c '^refuse' "$CLAUDE_GUARD_LOG" || true) refused"
-    grep '^refuse' "$CLAUDE_GUARD_LOG" || true
-    result=$(jq -r -R 'fromjson? | select(.type == "result") | .result // empty' "$session/transcript.jsonl" | tail -n 20 || true)
-    echo "final message, last lines:"
-    echo "$result"
-    last=$(grep -v '^[[:space:]]*$' <<< "$result" | tail -n 1 || true)
-    if ! grep -qxE '[*`]*CLAUDE-TEST: PASS[*`.]*[[:space:]]*' <<< "$last"; then
-      echo "::error::the $layout session's final message does not end with CLAUDE-TEST: PASS"
-      session_status=1
-    fi
+    echo "no report.md"
   fi
-  echo "::endgroup::"
-  if [ "$session_status" -ne 0 ]; then
-    status=$session_status
+  cat "$session/results.tsv" 2> /dev/null || echo "no results.tsv"
+  echo "guard hook: $(grep -c '^allow' "$CLAUDE_GUARD_LOG" || true) allowed, $(grep -c '^refuse' "$CLAUDE_GUARD_LOG" || true) refused"
+  grep '^refuse' "$CLAUDE_GUARD_LOG" || true
+  result=$(jq -r -R 'fromjson? | select(.type == "result") | .result // empty' "$session/transcript.jsonl" | tail -n 20 || true)
+  echo "final message, last lines:"
+  echo "$result"
+  last=$(grep -v '^[[:space:]]*$' <<< "$result" | tail -n 1 || true)
+  if ! grep -qxE '[*`]*CLAUDE-TEST: PASS[*`.]*[[:space:]]*' <<< "$last"; then
+    echo "::error::the $name session's final message does not end with CLAUDE-TEST: PASS"
+    status=1
   fi
-  previous=$layout
-done
+fi
+echo "::endgroup::"
 exit "$status"
