@@ -40,6 +40,8 @@ HELP = """peer <name> <command> [args]
   image <chat> <test.jpg|logo.png>       send an image: a TV test card 1280x720, or the SimpleX logo on transparency (30 s)
   file <chat> <test.pdf|test.txt|test.jpg|logo.png>  send a file (30 s)
   text-file <chat> <file name> <line>... send a text file with these lines, e.g. notes.md (30 s)
+  big-file <chat> <megabytes>            send a file of random bytes, 1 to 12 MB, e.g. to watch a transfer in progress
+                                         or to offer more than the 8 MB the app accepts (30 s and 10 s per MB)
   voice <chat> <seconds>                 send a voice message: a tone, 1 to 60 s long (30 s)
   receive <file id>                      receive a file offered in a message (the id is in its output) (30 s)
   messages [<chat>] [<count>]            print the last messages, of one chat or all (5 s)
@@ -297,6 +299,12 @@ def text_file(p, ref, name, *lines):
     return p.run(f"/f {chat(ref)} {path}", 30)
 
 
+def big_file(p, ref, megabytes):
+    n = number(megabytes, 1, 12, "megabytes")
+    path = p.write_file(f"big-{n}MB.bin", os.urandom(n * 1024 * 1024))
+    return p.run(f"/f {chat(ref)} {path}", 30 + 10 * n)
+
+
 def voice(p, ref, secs):
     n = number(secs, 1, 60, "seconds")
     return p.send_json(ref, [{"filePath": p.voice_file(n), "msgContent": {"type": "voice", "text": "", "duration": n}}], 30)
@@ -351,6 +359,7 @@ COMMANDS = {
     "image": lambda p, ref, f: p.run(f"/img {chat(ref)} {fixture(f, IMAGES)}", 30),
     "file": lambda p, ref, f: p.run(f"/f {chat(ref)} {fixture(f, list(FIXTURES))}", 30),
     "text-file": text_file,
+    "big-file": big_file,
     "voice": voice,
     "receive": lambda p, i: p.run(f"/fr {number(i, 1, 1000000, 'file id')}", 30),
     "messages": messages,
