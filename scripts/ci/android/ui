@@ -13,6 +13,7 @@
 #   ui find <text>                print "x y left top right bottom", the element's centre and bounds; fail if it is not on screen
 #   ui wait <text> [secs]         wait up to secs (30) until the text is on screen
 #   ui click <x> <y>              tap at x,y
+#   ui long-press <x> <y>         touch x,y for 1.2 s, e.g. to open a message's menu
 #   ui click-text <text> [secs]   wait up to secs (20) for the text and tap its centre
 #   ui scroll <x> <y> <up|down> [times]
 #                                 swipe at x,y to scroll towards the top (up) or bottom (down) of the content, 3 times unless given
@@ -282,6 +283,12 @@ case "${1:-}" in
     number "$3"
     adb shell input tap "$2" "$3"
     log "click $2,$3"
+    ;;
+  long-press)
+    number "$2"
+    number "$3"
+    adb shell input swipe "$2" "$3" "$2" "$3" 1200
+    log "long-press $2,$3"
     ;;
   click-text)
     secs=${3:-20}
