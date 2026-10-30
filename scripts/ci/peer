@@ -360,7 +360,7 @@ COMMANDS = {
     "text-file": text_file,
     "big-file": big_file,
     "voice": voice,
-    "receive": lambda p, i: p.run(f"/fr {number(i, 1, 1000000, 'file id')}", 30),
+    "receive": lambda p, i: p.run(f"/fr {number(i, 1, 1000000, 'file id')} approved_relays=on", 30),
     "messages": messages,
     "wait": wait,
     "chats": lambda p: p.run("/chats", 5),
