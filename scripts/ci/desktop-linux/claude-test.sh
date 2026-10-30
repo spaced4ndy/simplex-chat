@@ -68,6 +68,10 @@ export UI_OUT=$session/screens RESULTS=$session/results.tsv CASES=$cases PROMPT=
     echo
     echo "- Session: $name."
     echo "- Cases: $cases."
+    if [ -n "${BACKEND_DIR:-}" ]; then
+      echo "- The test backend's SMP server, for cases that add a custom server: $(cat "$BACKEND_DIR/names-server")."
+      echo "- The test backend's chat relay, for cases that add a custom relay: $(grep -m 1 -oE '^https://[^ ]+/r#[^ ]+' "$BACKEND_DIR/relay.log")."
+    fi
     echo "- Limits: ${max_turns:-60} turns, \$${max_budget:-3} (estimated at API prices) and $max_minutes minutes. Record each case's result as soon as it is done."
   fi
   if [ -n "$plan" ]; then
