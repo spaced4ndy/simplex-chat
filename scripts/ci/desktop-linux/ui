@@ -27,6 +27,7 @@
 #                                 the clipboard holds, e.g. a link the app copied
 #   ui do <command> [args] -- <command> [args] ...
 #                                 run the commands in order, stopping at the first that fails
+#   ui relaunch                   quit the app and start it again with its data, as a user restarting it would
 #   ui stop                       stop the app, openbox and Xvfb
 #
 # Text is compared ignoring case, spaces and punctuation, with a capital I and a lowercase l alike; a phrase that is
@@ -93,6 +94,13 @@ start() {
     mkdir -p "$(dirname "$settings")"
     printf '%s\n' "$@" > "$settings"
   fi
+  echo "$app_dir" > "$state/app-dir"
+  launch_app
+}
+
+launch_app() {
+  local app_dir
+  app_dir=$(cat "$state/app-dir")
   XDG_DATA_HOME="$state/data" \
     XDG_CONFIG_HOME="$state/config" \
     JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=$state/tmp -Dskiko.renderApi=SOFTWARE" \
@@ -309,6 +317,11 @@ case "${1:-}" in
         command=()
       fi
     done
+    ;;
+  relaunch)
+    stop_process app 10
+    launch_app
+    log "relaunch"
     ;;
   stop)
     stop_process app 10
