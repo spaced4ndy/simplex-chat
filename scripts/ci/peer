@@ -1,0 +1,406 @@
+#!/usr/bin/env python3
+
+import inspect
+import json
+import math
+import os
+import re
+import shutil
+import sqlite3
+import struct
+import subprocess
+import sys
+import wave
+
+HELP = """peer <name> <command> [args]
+  Runs one command in the CLI client <name> (2-16 lowercase letters or digits, also its display name), created
+  on first use with the test backend's simplex-chat. A peer is online only while a command runs, for the seconds
+  shown below, and prints what it sees then: messages it receives, connections, errors. Messages the app sends
+  while the peer is offline arrive at its next command: run `peer <name> wait` to receive them.
+  <chat> is @<contact> or #<group>, quoted because the shell drops an unquoted word starting with #: '#team'.
+  Names are as the peer sees them (the app's profile name, a group's name), shown by `peer <name> chats`.
+
+  link                                   create a 1-time invitation link and print it (15 s)
+  address                                create the peer's contact address and print it (15 s)
+  show-address                           print the peer's address (5 s)
+  auto-accept <on|off>                   accept contact requests to the address automatically (5 s)
+  connect <link>                         connect via a link from the app: 1-time link, address, group or channel link (30 s)
+  accept <contact>                       accept a contact request (20 s)
+  reject <contact>                       reject a contact request (10 s)
+  send <chat> <text> [<line>...]         send a message; each further argument is another line of it (10 s)
+  long-message <chat> <kilobytes>        send a text message of this size, 1 to 64 KB (10 s)
+  reply <chat> <author> <quoted> <text>  reply to the message starting with <quoted> sent by <author>: me, or
+                                         the contact or member's name (10 s)
+  react <chat> <emoji> <message>         react to the message starting with <message>; emoji: like, dislike,
+                                         smile, laugh, sad, heart, rocket, check (10 s)
+  unreact <chat> <emoji> <message>       remove that reaction (10 s)
+  edit <chat> <old> <new>                change the peer's message starting with <old> to <new> (10 s)
+  delete <chat> <message>                delete the peer's message starting with <message> for everyone (10 s)
+  moderate <group> <member> <message>    delete a member's message starting with <message> for everyone (10 s)
+  image <chat> <test.jpg|logo.png>       send an image: a TV test card 1280x720, or the SimpleX logo on transparency (30 s)
+  file <chat> <test.pdf|test.txt|test.jpg|logo.png>  send a file (30 s)
+  text-file <chat> <file name> <line>... send a text file with these lines, e.g. notes.md (30 s)
+  voice <chat> <seconds>                 send a voice message: a tone, 1 to 60 s long (30 s)
+  receive <file id>                      receive a file offered in a message (the id is in its output) (30 s)
+  messages [<chat>] [<count>]            print the last messages, of one chat or all (5 s)
+  wait [<seconds>]                       stay online, receive and print what arrives, 20 s or up to 120 (seconds)
+  chats                                  print the peer's chats (5 s)
+  group <name>                           create a group, name of letters, digits and _ (10 s)
+  invite <group> <contact> [<role>]      invite a contact; role: owner, admin, moderator, member (default), observer (10 s)
+  join <group>                           accept a group invitation (30 s)
+  leave <group>                          leave a group (10 s)
+  remove <group> <member>                remove a member (10 s)
+  role <group> <member> <role>           change a member's role (10 s)
+  members <group>                        print a group's members (5 s)
+  group-link <group> [<role>]            create the group's link and print it (15 s)
+  show-group-link <group>                print the group's link (5 s)
+  welcome <group> <text>                 set the group's welcome message (10 s)
+  block-for-all <group> <member>         block a member for all (10 s)
+  unblock-for-all <group> <member>       unblock a member for all (10 s)
+  delete-contact <contact>               delete a contact and notify them (10 s)
+  delete-group <group>                   delete a group (10 s)
+  clear <chat>                           clear a chat's messages for the peer (5 s)
+  profile <display name> [<full name>]   change the peer's profile names (10 s)
+  backup                                 save a copy of the peer's databases (offline)
+  restore                                put the saved copy back, so the peer's encryption is out of step with its
+                                         contacts': the next messages fail to decrypt (offline)
+  cli <command>                          one of these other CLI commands (10 s):
+                                         /set voice|files|history|reactions|calls|delete|direct|disappear|reports|receipts ...
+                                         /switch @<contact>, /abort switch @<contact>, /i @<contact>, /i #<group>,
+                                         /_address_settings 1 {...}, /_add #<group id> #<group id> <member id> <role>,
+                                         /accept member #<group> @<member>, /block #<group> @<member>, /unblock ...,
+                                         /delete link #<group>, /p, /v, /contacts, /groups"""
+
+NAME = re.compile(r"[a-z][a-z0-9]{1,15}")
+CHAT = re.compile(r"[@#][^'\x00-\x1f\x7f]{1,64}")
+MEMBER = re.compile(r"[^'@#\x00-\x1f\x7f][^'\x00-\x1f\x7f]{0,63}")
+GROUP_NAME = re.compile(r"[A-Za-z0-9_]{1,30}")
+FILE_NAME = re.compile(r"[^/\\\x00-\x1f\x7f]{1,60}")
+LINK = re.compile(r"(https://[A-Za-z0-9.-]+/[a-z]*#|simplex:/[a-z]*#)[A-Za-z0-9_\-/=%.:?&+@~#]+")
+ROLES = ["owner", "admin", "moderator", "member", "observer"]
+EMOJI = {"like": "👍", "dislike": "👎", "smile": "😀", "laugh": "😂", "sad": "😢", "heart": "❤", "rocket": "🚀", "check": "✅"}
+FIXTURES = {
+    "test.jpg": "tests/fixtures/test.jpg",
+    "logo.png": "tests/fixtures/logo-large-rgba.png",
+    "test.pdf": "tests/fixtures/test.pdf",
+    "test.txt": "tests/fixtures/test.txt",
+}
+IMAGES = ["test.jpg", "logo.png"]
+CLI_COMMANDS = re.compile(
+    r"/set (voice|files|history|reactions|calls|delete|direct|disappear|reports|receipts) [^\x00-\x1f\x7f]+"
+    r"|/(abort )?switch [@#][^\x00-\x1f\x7f]+"
+    r"|/i [@#][^\x00-\x1f\x7f]+"
+    r"|/_address_settings 1 \{[^\x00-\x1f\x7f]+\}"
+    r"|/_add #[0-9]+ #[0-9]+ [0-9]+ (owner|admin|moderator|member|observer)"
+    r"|/accept member #[^\x00-\x1f\x7f]+"
+    r"|/(un)?block #[^\x00-\x1f\x7f]+"
+    r"|/delete link #[^\x00-\x1f\x7f]+"
+    r"|/p|/v|/contacts|/groups"
+)
+
+repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+class Usage(Exception):
+    pass
+
+
+def check(pattern, value, what):
+    if not pattern.fullmatch(value):
+        raise Usage(f"{what} {value!r} is not allowed")
+    return value
+
+
+def text(value, what="text", limit=16000):
+    if not value or len(value) > limit or re.search(r"[\x00-\x1f\x7f]", value):
+        raise Usage(f"{what} must be one line of 1 to {limit} characters")
+    return value
+
+
+def quoted(value, what):
+    if ")" in text(value, what, 500):
+        raise Usage(f"{what} can't contain ')'")
+    return value
+
+
+def chat(value):
+    check(CHAT, value, "chat")
+    return f"{value[0]}'{value[1:]}'"
+
+
+def group(value):
+    if not value.startswith("#"):
+        raise Usage(f"group {value!r} must start with #")
+    return chat(value)
+
+
+def member(value):
+    return f"@'{check(MEMBER, value.lstrip('@'), 'member')}'"
+
+
+def role(value):
+    if value not in ROLES:
+        raise Usage(f"role {value!r} is not one of {', '.join(ROLES)}")
+    return value
+
+
+def emoji(value):
+    if value in EMOJI:
+        return EMOJI[value]
+    if value in EMOJI.values():
+        return value
+    raise Usage(f"emoji {value!r} is not one of {', '.join(EMOJI)}")
+
+
+def number(value, low, high, what):
+    if not re.fullmatch(r"[0-9]+", value) or not low <= int(value) <= high:
+        raise Usage(f"{what} must be a number from {low} to {high}")
+    return int(value)
+
+
+def fixture(value, allowed):
+    if value not in allowed:
+        raise Usage(f"{value!r} is not one of {', '.join(allowed)}")
+    return os.path.join(repo, FIXTURES[value])
+
+
+class Peer:
+    def __init__(self, name, peers):
+        self.name = check(NAME, name, "peer name")
+        self.home = os.path.join(peers, name)
+        self.db = os.path.join(self.home, name)
+        self.files = os.path.join(self.home, "files")
+
+    def run(self, command, secs):
+        os.makedirs(self.files, exist_ok=True)
+        args = [
+            os.path.join(os.environ["BACKEND_DIR"], "bin", "simplex-chat"),
+            "-d", self.db,
+            "--user-display-name", self.name,
+            "--files-folder", self.files,
+            "-e", command,
+            "-t", str(secs),
+            "--execute-log", "all",
+        ]
+        result = subprocess.run(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=secs + 120)
+        output = result.stdout.decode(errors="replace")
+        with open(os.path.join(self.home, "commands.log"), "a") as log:
+            log.write(f"> {command[:300]}\n{output}\n")
+        print(output.rstrip())
+        if result.returncode != 0:
+            print(f"error: simplex-chat exited with {result.returncode}")
+        return result.returncode
+
+    def chat_id(self, ref):
+        query = {
+            "@": "SELECT contact_id FROM contacts WHERE local_display_name = ? ORDER BY contact_id DESC LIMIT 1",
+            "#": "SELECT group_id FROM groups WHERE local_display_name = ? ORDER BY group_id DESC LIMIT 1",
+        }[ref[0]]
+        with sqlite3.connect(f"file:{self.db}_chat.db?mode=ro", uri=True) as db:
+            row = db.execute(query, (ref[1:],)).fetchone()
+        if row is None:
+            raise Usage(f"the peer has no chat {ref}: see `peer {self.name} chats`")
+        return f"{ref[0]}{row[0]}"
+
+    def send_json(self, ref, messages, secs):
+        check(CHAT, ref, "chat")
+        return self.run(f"/_send {self.chat_id(ref)} json {json.dumps(messages)}", secs)
+
+    def write_file(self, name, data):
+        out = os.path.join(self.home, "out")
+        os.makedirs(out, exist_ok=True)
+        if name in (".", ".."):
+            raise Usage(f"file name {name!r} is not allowed")
+        path = os.path.join(out, check(FILE_NAME, name, "file name"))
+        with open(path, "wb") as f:
+            f.write(data)
+        return path
+
+    def voice_file(self, secs):
+        out = os.path.join(self.home, "out")
+        os.makedirs(out, exist_ok=True)
+        path = os.path.join(out, f"voice-{secs}s.wav")
+        rate = 16000
+        with wave.open(path, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(rate)
+            w.writeframes(b"".join(struct.pack("<h", int(8000 * math.sin(2 * math.pi * 440 * i / rate))) for i in range(rate * secs)))
+        return path
+
+    def databases(self):
+        return [f for f in os.listdir(self.home) if f.startswith(f"{self.name}_") and ".db" in f]
+
+    def backup(self):
+        saved = os.path.join(self.home, "backup")
+        shutil.rmtree(saved, ignore_errors=True)
+        os.makedirs(saved)
+        for f in self.databases():
+            shutil.copy2(os.path.join(self.home, f), saved)
+        print(f"saved {', '.join(sorted(self.databases()))}")
+        return 0
+
+    def restore(self):
+        saved = os.path.join(self.home, "backup")
+        if not os.path.isdir(saved):
+            raise Usage(f"no saved copy: run `peer {self.name} backup` first")
+        for f in self.databases():
+            os.remove(os.path.join(self.home, f))
+        for f in os.listdir(saved):
+            shutil.copy2(os.path.join(saved, f), self.home)
+        print(f"restored {', '.join(sorted(os.listdir(saved)))}")
+        return 0
+
+
+def send(p, ref, *lines):
+    if not lines:
+        raise Usage("send needs a text")
+    for line in lines:
+        text(line)
+    if len(lines) == 1 and lines[0].isascii():
+        return p.run(f"{chat(ref)} {lines[0]}", 10)
+    return p.send_json(ref, [{"msgContent": {"type": "text", "text": "\n".join(lines)}}], 10)
+
+
+def long_message(p, ref, kilobytes):
+    words = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+    size = number(kilobytes, 1, 64, "kilobytes") * 1024
+    return p.send_json(ref, [{"msgContent": {"type": "text", "text": (words * (size // len(words) + 1))[:size]}}], 10)
+
+
+def reply(p, ref, author, quote, msg):
+    quoted(quote, "quoted text")
+    text(msg)
+    if ref.startswith("@"):
+        prefix = ">>" if author == "me" else ">"
+        return p.run(f"{prefix} {chat(ref)} ({quote}) {msg}", 10)
+    by = "" if author == "me" else f" {member(author)}"
+    return p.run(f"> {group(ref)}{by} ({quote}) {msg}", 10)
+
+
+def react(on):
+    def command(p, ref, e, msg):
+        return p.run(f"{'+' if on else '-'}{emoji(e)} {chat(ref)} {text(msg, 'message')}", 10)
+
+    return command
+
+
+def edit(p, ref, old, new):
+    return p.run(f"! {chat(ref)} ({quoted(old, 'old text')}) {text(new, 'new text')}", 10)
+
+
+def text_file(p, ref, name, *lines):
+    if not lines:
+        raise Usage("text-file needs at least one line")
+    path = p.write_file(name, ("\n".join(text(line, "line") for line in lines) + "\n").encode())
+    return p.run(f"/f {chat(ref)} {path}", 30)
+
+
+def voice(p, ref, secs):
+    n = number(secs, 1, 60, "seconds")
+    return p.send_json(ref, [{"filePath": p.voice_file(n), "msgContent": {"type": "voice", "text": "", "duration": n}}], 30)
+
+
+def messages(p, *args):
+    if len(args) > 2:
+        raise Usage("messages takes a chat and a count")
+    parts = ["/tail"]
+    for a in args:
+        parts.append(str(number(a, 1, 200, "count")) if a.isdigit() else chat(a))
+    return p.run(" ".join(parts), 5)
+
+
+def wait(p, secs="20"):
+    return p.run("/u", number(secs, 1, 120, "seconds"))
+
+
+def invite(p, g, contact, r="member"):
+    return p.run(f"/a {group(g)} {chat(contact)} {role(r)}", 10)
+
+
+def group_link(p, g, r="member"):
+    return p.run(f"/create link {group(g)} {role(r)}", 15)
+
+
+def profile(p, name, full=None):
+    check(GROUP_NAME, name, "display name")
+    return p.run(f"/p {name}" + (f" {text(full, 'full name', 100)}" if full else ""), 10)
+
+
+def cli(p, command):
+    return p.run(check(CLI_COMMANDS, command, "command"), 10)
+
+
+COMMANDS = {
+    "link": lambda p: p.run("/c", 15),
+    "address": lambda p: p.run("/ad", 15),
+    "show-address": lambda p: p.run("/sa", 5),
+    "auto-accept": lambda p, v: p.run(f"/auto_accept {check(re.compile('on|off'), v, 'value')}", 5),
+    "connect": lambda p, link: p.run(f"/c {check(LINK, link, 'link')}", 30),
+    "accept": lambda p, c: p.run(f"/ac {member(c)}", 20),
+    "reject": lambda p, c: p.run(f"/rc {member(c)}", 10),
+    "send": send,
+    "long-message": long_message,
+    "reply": reply,
+    "react": react(True),
+    "unreact": react(False),
+    "edit": edit,
+    "delete": lambda p, ref, msg: p.run(f"\\ {chat(ref)} {text(msg, 'message')}", 10),
+    "moderate": lambda p, g, m, msg: p.run(f"\\\\ {group(g)} {member(m)} {text(msg, 'message')}", 10),
+    "image": lambda p, ref, f: p.run(f"/img {chat(ref)} {fixture(f, IMAGES)}", 30),
+    "file": lambda p, ref, f: p.run(f"/f {chat(ref)} {fixture(f, list(FIXTURES))}", 30),
+    "text-file": text_file,
+    "voice": voice,
+    "receive": lambda p, i: p.run(f"/fr {number(i, 1, 1000000, 'file id')}", 30),
+    "messages": messages,
+    "wait": wait,
+    "chats": lambda p: p.run("/chats", 5),
+    "group": lambda p, name: p.run(f"/g {check(GROUP_NAME, name, 'group name')}", 10),
+    "invite": invite,
+    "join": lambda p, g: p.run(f"/j {group(g)}", 30),
+    "leave": lambda p, g: p.run(f"/l {group(g)}", 10),
+    "remove": lambda p, g, m: p.run(f"/rm {group(g)} {member(m)}", 10),
+    "role": lambda p, g, m, r: p.run(f"/mr {group(g)} {member(m)} {role(r)}", 10),
+    "members": lambda p, g: p.run(f"/ms {group(g)}", 5),
+    "group-link": group_link,
+    "show-group-link": lambda p, g: p.run(f"/show link {group(g)}", 5),
+    "welcome": lambda p, g, t: p.run(f"/set welcome {group(g)} {text(t)}", 10),
+    "block-for-all": lambda p, g, m: p.run(f"/block for all {group(g)} {member(m)}", 10),
+    "unblock-for-all": lambda p, g, m: p.run(f"/unblock for all {group(g)} {member(m)}", 10),
+    "delete-contact": lambda p, c: p.run(f"/d {member(c)}", 10),
+    "delete-group": lambda p, g: p.run(f"/d {group(g)}", 10),
+    "clear": lambda p, ref: p.run(f"/clear {chat(ref)}", 5),
+    "profile": profile,
+    "backup": lambda p: p.backup(),
+    "restore": lambda p: p.restore(),
+    "cli": cli,
+}
+
+
+def main(args):
+    peers = os.path.join(os.environ.get("BACKEND_DIR") or "", "peers")
+    if len(args) < 2 or args[1] not in COMMANDS:
+        print(HELP)
+        if os.path.isdir(peers):
+            print(f"\npeers so far: {', '.join(sorted(os.listdir(peers))) or 'none'}")
+        return 1
+    if not os.environ.get("BACKEND_DIR"):
+        print("error: the test backend is not running in this session, so there are no peers")
+        return 1
+    command = COMMANDS[args[1]]
+    try:
+        peer = Peer(args[0], peers)
+        try:
+            inspect.signature(command).bind(peer, *args[2:])
+        except TypeError:
+            raise Usage(f"wrong number of arguments for {args[1]}")
+        return command(peer, *args[2:])
+    except Usage as e:
+        print(f"error: {e}")
+    except subprocess.TimeoutExpired:
+        print("error: the peer's command did not finish in time")
+    print("\n".join(line for line in HELP.splitlines() if line.strip().startswith(args[1] + " ") or line.strip() == args[1]))
+    return 2
+
+
+sys.exit(main(sys.argv[1:]))
