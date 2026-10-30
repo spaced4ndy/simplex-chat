@@ -176,12 +176,13 @@ class Peer:
         args = [
             os.path.join(os.environ["BACKEND_DIR"], "bin", "simplex-chat"),
             "-d", self.db,
-            "--user-display-name", self.name,
             "--files-folder", self.files,
             "-e", command,
             "-t", str(secs),
             "--execute-log", "all",
         ]
+        if not os.path.exists(f"{self.db}_chat.db"):
+            args += ["--user-display-name", self.name]
         result = subprocess.run(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=secs + 120)
         output = result.stdout.decode(errors="replace")
         with open(os.path.join(self.home, "commands.log"), "a") as log:
