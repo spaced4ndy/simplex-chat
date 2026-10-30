@@ -32,7 +32,7 @@ HELP = """peer <name> <command> [args]
   reply <chat> <author> <quoted> <text>  reply to the message starting with <quoted> sent by <author>: me, or
                                          the contact or member's name (10 s)
   react <chat> <emoji> <message>         react to the message starting with <message>; emoji: like, dislike,
-                                         smile, laugh, sad, heart, rocket, check (10 s)
+                                         smile, sad, heart, rocket (10 s)
   unreact <chat> <emoji> <message>       remove that reaction (10 s)
   edit <chat> <old> <new>                change the peer's message starting with <old> to <new> (10 s)
   delete <chat> <message>                delete the peer's message starting with <message> for everyone (10 s)
@@ -80,7 +80,7 @@ GROUP_NAME = re.compile(r"[A-Za-z0-9_]{1,30}")
 FILE_NAME = re.compile(r"[^/\\\x00-\x1f\x7f]{1,60}")
 LINK = re.compile(r"(https://[A-Za-z0-9.-]+/[a-z]*#|simplex:/[a-z]*#)[A-Za-z0-9_\-/=%.:?&+@~#]+")
 ROLES = ["owner", "admin", "moderator", "member", "observer"]
-EMOJI = {"like": "👍", "dislike": "👎", "smile": "😀", "laugh": "😂", "sad": "😢", "heart": "❤", "rocket": "🚀", "check": "✅"}
+EMOJI = {"like": ("👍", "+"), "dislike": ("👎", "-"), "smile": ("😀", ")"), "sad": ("😢", ","), "heart": ("❤", "*"), "rocket": ("🚀", "^")}
 FIXTURES = {
     "test.jpg": "tests/fixtures/test.jpg",
     "logo.png": "tests/fixtures/logo-large-rgba.png",
@@ -147,10 +147,9 @@ def role(value):
 
 
 def emoji(value):
-    if value in EMOJI:
-        return EMOJI[value]
-    if value in EMOJI.values():
-        return value
+    for name, (char, shortcut) in EMOJI.items():
+        if value in (name, char):
+            return shortcut
     raise Usage(f"emoji {value!r} is not one of {', '.join(EMOJI)}")
 
 
