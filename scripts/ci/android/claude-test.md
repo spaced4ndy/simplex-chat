@@ -22,6 +22,18 @@ Your working directory is where your output goes. `ui shot <name>` saves `screen
 - **Get a link from the app:** "Share link" (or "Share 1-time link") opens Android's share sheet, whose preview shows the link's text: `ui text` or `ui tree` lists it. Or send the link as a message to a peer contact (paste it in the message field) and read it with `peer <name> messages '@citester'`.
 - `ui do` runs several commands in a row and stops at the first that fails, so a failed chain tells you where it stopped: `ui do click-text "Start new chat" -- click-text "Create group" 10 -- wait "Enter group name" -- shot new-group`.
 
+## Where things are
+
+- **Your privacy** (Settings): at its bottom, "More privacy" holds Show last messages, Message draft, Send delivery receipts to (contacts, groups), Protect IP address and Show encryption.
+- **Developer tools:** Settings, then tap the app version row, then Developer tools: Chat console, and "Show developer options", which adds more fields to item info and connection details to contact and member info.
+- **Appearance** (Settings), scrolled down: App toolbars, Message shape (Corner, Tail), Profile images, font size.
+- **Incognito:** on the 1-time link, address and connect screens, the profile row ("Select chat profile") lets you choose Incognito.
+- **Giving the app a link reliably:** typing a link into the search field makes the app try it before it is complete. Instead have a peer contact send the link as a message (`peer bob send '@citester' '<link>'`), or put it in a Private notes message, and tap the link in the chat.
+- **A peer joins a group or channel by its link** with `peer <name> connect '<link>'`; `peer <name> join` only accepts an invitation.
+- **Business chats:** `peer bob address`, then `peer bob cli '/_address_settings 1 {"businessAddress":true,"autoAccept":{"acceptIncognito":false}}'`, and connect the app to bob's address; the app's own business address is a switch in its address settings, and a peer connects to it.
+- **A peer's preferences for the app:** `peer bob cli '/set voice @citester no'` (always, yes or no; also files, calls, delete, disappear).
+- **A long chat history:** `peer bob many '@citester' 120`.
+
 ## The regression cases
 
 The cases of this session (the table at the end) come from the team's release regression table: each is one line written for a person who knows the app, not a list of steps. For each case, work out the shortest way to check what it says in this app, do it, check it, and record the result at once.

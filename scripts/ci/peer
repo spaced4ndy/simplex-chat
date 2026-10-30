@@ -29,6 +29,7 @@ HELP = """peer <name> <command> [args]
   reject <contact>                       reject a contact request (10 s)
   send <chat> <text> [<line>...]         send a message; each further argument is another line of it (10 s)
   long-message <chat> <kilobytes>        send a text message of this size, 1 to 64 KB (10 s)
+  many <chat> <count>                    send this many numbered messages at once, 1 to 150, e.g. for a long history (20 s)
   reply <chat> <author> <quoted> <text>  reply to the message starting with <quoted> sent by <author>: me, or
                                          the contact or member's name (10 s)
   react <chat> <emoji> <message>         react to the message starting with <message>; emoji: like, dislike,
@@ -73,7 +74,7 @@ HELP = """peer <name> <command> [args]
                                          /accept member #<group> @<member>, /block #<group> @<member>, /unblock ...,
                                          /set admission review #<group> all|off (members join for review),
                                          #<group> (support) <text>, #<group> (support:<member>) <text> (support chats),
-                                         /delete link #<group>, /p, /v, /contacts, /groups"""
+                                         /delete link #<group>, /fc <file id> (cancel a file), /p, /v, /contacts, /groups"""
 
 NAME = re.compile(r"[a-z][a-z0-9]{1,15}")
 CHAT = re.compile(r"[@#][^'\x00-\x1f\x7f]{1,64}")
@@ -101,6 +102,7 @@ CLI_COMMANDS = re.compile(
     r"|#[^ \x00-\x1f\x7f]+ \(support(:[^)\x00-\x1f\x7f]+)?\) [^\x00-\x1f\x7f]+"
     r"|/(un)?block #[^\x00-\x1f\x7f]+"
     r"|/delete link #[^\x00-\x1f\x7f]+"
+    r"|/fc [0-9]+"
     r"|/p|/v|/contacts|/groups"
 )
 
@@ -274,6 +276,11 @@ def long_message(p, ref, kilobytes):
     return p.send_json(ref, [{"msgContent": {"type": "text", "text": (words * (size // len(words) + 1))[:size]}}], 10)
 
 
+def many(p, ref, count):
+    n = number(count, 1, 150, "count")
+    return p.send_json(ref, [{"msgContent": {"type": "text", "text": f"message {i} of {n}"}} for i in range(1, n + 1)], 20)
+
+
 def reply(p, ref, author, quote, msg):
     quoted(quote, "quoted text")
     text(msg)
@@ -353,6 +360,7 @@ COMMANDS = {
     "reject": lambda p, c: p.run(f"/rc {member(c)}", 10),
     "send": send,
     "long-message": long_message,
+    "many": many,
     "reply": reply,
     "react": react(True),
     "unreact": react(False),

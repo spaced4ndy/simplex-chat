@@ -2,59 +2,36 @@
 
 | Row | Section | Case |
 |---|---|---|
-| 151 | editing and deletion | start live message when text is typed (long press send button) |
-| 152 | editing and deletion | start live message with attachment added (e.g. image) - by long-pressing send button |
-| 153 | editing and deletion | send disappearing message - deleted for both after ttl (on recipient side after read) |
-| 154 | editing and deletion | disappearing message is deleted on time after chat restart, after re-opening from background |
-| 155 | editing and deletion | if ttl changes messages with non default ttl display it |
-| 156 | editing and deletion | edit disappearing message |
-| 157 | editing and deletion | delete disappearing message |
-| 158 | editing and deletion | quote disappearing message |
-| 159 | editing and deletion | send live disappearing message, disappearance scheduled after live message is finished |
-| 160 | editing and deletion | send disappearing message with custom time (long press send) |
-| 161 | editing and deletion | send disappearing message with custom time allowed if conversation setting allows but timer is not set |
-| 162 | editing and deletion | disappearing message with 12 months interval - correct disappearing time in info |
-| 163 | editing and deletion | set custom disappearing message time - for contact, for group |
-| 164 | editing and deletion | chat item info view - own / other's chat item, history, share text |
-| 165 | editing and deletion | chat item info view - delivery statuses for sent group messages |
-| 166 | editing and deletion | chat item info view - original (quoted) message |
-| 167 | editing and deletion | chat item info view - show file servers used to deliver a file |
-| 169 | link previews | generate link preview, send and receive, check after reopen |
-| 170 | link previews | changing link or link's text before sending (faster than link preview updated) sends message without link preview |
-| 171 | link previews | editing link preview updates link preview on recipient's side accordingly (changes/removes it) |
-| 172 | link previews | cancel link preview |
-| 173 | link previews | link preview spinner |
-| 175 | chat view | group - member avatar is shown only once per series |
-| 176 | chat view | group - member name is shown only once per series on specific items (e.g. not shown for events) |
-| 177 | chat view | group - member connected items in a row are aggregated to a single item, with updating members list |
-| 178 | chat view | feature items are aggregated (connect with contact) |
-| 179 | chat view | clicking avatar opens member information |
-| 181 | chat view | messages are grouped by time (time is shown on last message in group of close messages) |
-| 182 | chat view | date separators and floating date are displayed when scrolling back in time |
-| 183 | chat view | in 6.2 - only android/desktop: chat is opened on first unread message |
-| 184 | chat view | in 6.2 - only android/desktop: navigate via quote to message that is not loaded (e.g. quoted message is higher than last 100+ messages and chat is opened on last message after all read) |
-| 185 | chat view | content filter - media, links, etc. |
-| 186 | chat view | navigate to message filtered via content filter |
-| 187 | chat view | select text in message (Desktop) |
-| 193 | user contact address | create address |
-| 194 | user contact address | delete address, shows alert |
-| 196 | user contact address | accept request via tap in chat list - should add pending contact, then connect |
-| 197 | user contact address | accept request via swipe (ios) / long press (android) |
-| 198 | user contact address | accept request from new chat sheet |
-| 200 | user contact address | accept request with the requesting client offline, then restart |
-| 201 | user contact address | since v6 accepting contact request (both from chat list and new chat sheet) opens chat and allows to send messages even if contact is offline |
-| 202 | user contact address | reject request - should delete contact |
-| 203 | user contact address | reject request via swipe (ios) / long press (android) |
-| 204 | user contact address | "contact already exists" alert when connecting via contact request |
-| 205 | user contact address | auto accept, saved on reload, disable auto accept |
-| 206 | user contact address | auto accept settings (text) are offered to be saved on back or dismiss (dismiss sheet on ios / click middle pane on desktop) |
-| 207 | user contact address | share with contacts dialogue on creation |
-| 208 | user contact address | share with contacts toggle - confirm / cancel (reverts toggle) |
-| 227 | settings | make command via chat console (e.g. `/v`) |
-| 228 | settings | webrtc server view works |
-| 229 | settings | add avatar from gallery - contacts should be updated |
-| 231 | settings | remove avatar - contacts should be updated |
-| 233 | settings | change accent color |
-| 234 | settings | change theme |
-| 235 | settings | enable reachable toolbar - chat list reversed (ios, android, desktop), new chat sheet (android) |
-| 237 | settings | change message roundness, tail |
+| 266 | authentication | set passcode, requires confirmation; passcode asked on authentication |
+| 267 | authentication | different "lock after" intervals |
+| 268 | authentication | change passcode |
+| 270 | authentication | set self-destruct code, change, open with regular code, open with self-destruct code |
+| 271 | authentication | set self-destruct code, change, open with self-destruct code when database key is not saved |
+| 282 | operators, conditions & smp/xftp servers advanced configuration | via your servers, add custom server with operator domain manually / via qr code (use smp7, see simplexmq repo) - should add server to operator page to separate section under smp/xftp servers |
+| 283 | operators, conditions & smp/xftp servers advanced configuration | add custom server with domain different from operators manually / via qr code (for example, use smp7 with edited domain or one community run server from https://simplex-directory.asriyan.me/) - should add server to your servers page |
+| 285 | operators, conditions & smp/xftp servers advanced configuration | test server - persisted to list of servers |
+| 302 | operators, conditions & smp/xftp servers advanced configuration | enable/disable functions of custom servers: message reception, private routing, and name resolution |
+| 306 | chat relays configuration | test custom chat relay -> populates name, editing name becomes disabled |
+| 356 | files | link preview is not added if image/file is added; link preview is removed when image/file is added |
+| 424 | user / contact / group preferences | files not allowed based on group preference |
+| 429 | db export / import | chat archive view - save archive, delete archive |
+| 448 | groups | add members permissions: owners - in all roles, admins - below owner, members - not allowed |
+| 450 | groups | remove member permissions: owners - allowed, admin - in role below owner, member - not allowed |
+| 476 | groups | blocked messages are grouped, can be expanded |
+| 479 | groups | block group member for all (admin has to block) - messages marked as blocked for all members except blocked |
+| 480 | groups | blocked member profile picture is blurred |
+| 587 | incognito mode & contact aliases | chats are searchable by alias, display name, full name |
+| 617 | group links | new contacts are not in list on connection and after reload, on joining side pending connection is in list |
+| 619 | group links | invited via group link chat item |
+| 623 | group links | deleting group but not deleting host contact still allows to re-join group via same link (xcontactid is deleted) |
+| 627 | member screening | connect to group with member review as member, get accepted to group |
+| 628 | member screening | connect to group with member review as observer, can send messages in support chat, get accepted to group |
+| 629 | member screening | when connecting to group with admission, opening chat opens support chat view automatically; going back goes to chat list |
+| 631 | member screening | group member sees flag in chat list if support chat has unread messages, number of unread support chat messages in chat view; can open support chat via bar |
+| 633 | member screening | new messages in support chats increase counter for moderators (add flag in chat list if it's the only unanswered chat) |
+| 634 | member screening | if another moderator answers in support chat counter is decreased for other moderators (flag is removed if it was the only unanswered chat) |
+| 635 | member screening | existing member (not in review, just current member) can start support chat with moderators via group info view |
+| 644 | business chats | as business add other team member to chat, other team member should have chat with client's avatar |
+| 645 | business chats | as customer add friend to chat (requires business member giving you admin role), friend should have chat with business' avatar |
+| 672 | user profiles | hidden profiles are not accounted in servers info - e.g. if you have 2 profiles, one of which is hidden, in non hidden profile statistics there shouldn't be "All users" option and numbers should match single profile |
+| 676 | user profiles | switch new connection to user profile with different set of configured servers - connection should be re-created on servers configured for second profile; other user should be able to connect; receiving server should match server for selected profile |
