@@ -40,7 +40,7 @@ max_minutes=$(scope max-minutes)
 cases=$(scope "cases-$name")
 plan=$(scope "plan-$name")
 
-export UI_OUT=$session/screens RESULTS=$session/results.tsv
+export UI_OUT=$session/screens RESULTS=$session/results.tsv CASES=$cases PROMPT=$session/prompt.md
 
 {
   cat "$prompt"

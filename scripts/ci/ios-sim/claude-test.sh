@@ -112,7 +112,9 @@ mkdir -p "$session/shots"
 echo "$name" >> "$out/sessions"
 ui layout "$layout"
 RESULTS=$session/results.tsv
-export RESULTS
+CASES=$(scope "cases-$name")
+PROMPT=$session/prompt.md
+export RESULTS CASES PROMPT
 write_prompt > "$session/prompt.md"
 echo "::group::Claude session: $name, $layout, $model, $max_turns turns, \$$max_budget, $max_minutes minutes"
 status=0
