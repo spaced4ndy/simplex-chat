@@ -23,6 +23,8 @@
 #                                 with red, green or blue, fail unless that colour dominates
 #   ui type <text>                type into the focused field
 #   ui key <key>...               press keys named as in xdotool (Return, Escape, ctrl+a)
+#   ui clipboard [<text>]         put the text on the clipboard, to paste it in the app; without a text, print what
+#                                 the clipboard holds, e.g. a link the app copied
 #   ui do <command> [args] -- <command> [args] ...
 #                                 run the commands in order, stopping at the first that fails
 #   ui stop                       stop the app, openbox and Xvfb
@@ -285,6 +287,16 @@ case "${1:-}" in
       xdotool key --delay 100 -- "$k"
     done
     log "key $*"
+    ;;
+  clipboard)
+    if [ $# -ge 2 ]; then
+      printf '%s' "$2" | xclip -selection clipboard -in > /dev/null 2>&1
+      log "clipboard set"
+    else
+      xclip -selection clipboard -out
+      echo
+      log "clipboard read"
+    fi
     ;;
   do)
     shift
