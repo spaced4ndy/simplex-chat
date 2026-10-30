@@ -99,7 +99,7 @@ data class BadgeStoreReceipt(
 // TODO [badges] Play Billing has no offline product configuration. Set to true to price the screens
 // and walk the purchase flow without Play Console products; the purchase is simulated and its
 // receipt says so.
-const val useBadgeTestProducts = false
+const val useBadgeTestProducts = true
 
 // test products stand in for a store, so the lane is offered without one
 val badgeStoreAvailable: Boolean get() = useBadgeTestProducts || platform.androidHasPlatformStore
