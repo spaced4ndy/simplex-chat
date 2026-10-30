@@ -41,6 +41,8 @@ jobs:
       run-backend: ${{ steps.jobs.outputs.backend }}
       run-release: ${{ steps.jobs.outputs.release }}
       claude-backend: ${{ steps.scope.outputs.backend }}
+      claude-sessions: ${{ steps.scope.outputs.sessions }}
+      claude-parallel: ${{ steps.scope.outputs.parallel }}
       core: ${{ steps.names.outputs.core }}
       core-run: ${{ steps.core.outputs.run-id }}
       backend: ${{ steps.names.outputs.backend }}
@@ -65,19 +67,7 @@ jobs:
         if: steps.jobs.outputs.claude == 'true'
         env:
           BACKEND: ${{ steps.jobs.outputs.backend }}
-        run: |
-          backend=$(sed -n 's/^backend: *//p' scripts/ci/desktop-linux/claude-scope)
-          case "$backend" in
-            yes | no) echo "backend=$backend" | tee -a "$GITHUB_OUTPUT" ;;
-            *)
-              echo "::error::claude-scope must say backend: yes or backend: no"
-              exit 1
-              ;;
-          esac
-          if [ "$backend" = yes ] && [ "$BACKEND" != true ]; then
-            echo "::error::claude-scope says the Claude session uses the test backend: ask for it too"
-            exit 1
-          fi
+        run: scripts/ci/claude-scope.sh scripts/ci/desktop-linux/claude-scope "$BACKEND"
 
       # artifacts are named after the sources they are built from, so a run uses one that an earlier run uploaded
       - name: Artifact names
@@ -339,20 +329,25 @@ jobs:
           retention-days: 3
           if-no-files-found: warn
 
-  # Claude Code repeats the smoke test with the ui helper. Each run spends the Claude subscription's usage
-  # limits, so it runs only when asked for. The app-sim-claude environment's branch rule decides which branches
-  # may use the token.
+  # Claude Code runs each session of claude-scope in its own job, with the ui helper. Each run spends the Claude
+  # subscription's usage limits, so it runs only when asked for. The app-sim-claude environment's branch rule decides
+  # which branches may use the token.
   claude:
-    name: Claude tests the desktop app
+    name: Claude tests the desktop app (${{ matrix.session }})
     needs: [plan, app]
     if: ${{ !cancelled() && needs.plan.outputs.run-claude == 'true' && needs.app.result == 'success' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(needs.plan.outputs.claude-parallel || '1') }}
+      matrix:
+        session: ${{ fromJSON(needs.plan.outputs.claude-sessions || '["main"]') }}
     environment:
       name: app-sim-claude
       deployment: false
     concurrency:
-      group: desktop-linux-claude-${{ github.ref }}
+      group: desktop-linux-claude-${{ github.ref }}-${{ matrix.session }}
       cancel-in-progress: true
     env:
       # the same in both app workflows
@@ -367,8 +362,8 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xdotool openbox imagemagick tesseract-ocr sqlite3 fonts-dejavu-core
-          dpkg-query -W xvfb xdotool openbox imagemagick tesseract-ocr sqlite3 fonts-dejavu-core
+          sudo apt-get install -y xvfb xdotool xclip openbox imagemagick tesseract-ocr sqlite3 fonts-dejavu-core
+          dpkg-query -W xvfb xdotool xclip openbox imagemagick tesseract-ocr sqlite3 fonts-dejavu-core
 
       - name: Download app
         uses: actions/download-artifact@v8
@@ -396,30 +391,37 @@ jobs:
         timeout-minutes: 30
         run: scripts/ci/desktop-linux/backend.sh start ~/backend/${{ env.BACKEND_PKG }} "$RUNNER_TEMP/backend"
 
-      # ui goes on every shell's PATH, where Claude's Bash tool finds it whatever environment it builds
-      - name: Install Claude Code and the ui command
+      # the helpers go on every shell's PATH, where Claude's Bash tool finds them whatever environment it builds
+      - name: Install Claude Code and the helper commands
         run: |
           npm install --prefix "$RUNNER_TEMP/claude-code" "@anthropic-ai/claude-code@$CLAUDE_CODE_VERSION"
           echo "$RUNNER_TEMP/claude-code/node_modules/.bin" >> "$GITHUB_PATH"
-          printf '#!/bin/sh\nexec %s/scripts/ci/desktop-linux/ui "$@"\n' "$PWD" | sudo tee /usr/local/bin/ui
-          sudo chmod +x /usr/local/bin/ui
+          for helper in desktop-linux/ui peer record; do
+            printf '#!/bin/sh\nexec %s/scripts/ci/%s "$@"\n' "$PWD" "$helper" | sudo tee "/usr/local/bin/$(basename "$helper")"
+            sudo chmod +x "/usr/local/bin/$(basename "$helper")"
+          done
 
       - name: Start the app
         run: scripts/ci/desktop-linux/smoke-test.sh "$RUNNER_TEMP/app/simplex" "$RUNNER_TEMP/claude-test/screens" start
 
       - name: Add test images
         run: |
-          mkdir -p "$RUNNER_TEMP/claude-test/images"
-          cp tests/fixtures/test.jpg "$RUNNER_TEMP/claude-test/images/test-card.jpg"
-          cp tests/fixtures/logo-large-rgba.png "$RUNNER_TEMP/claude-test/images/simplex-logo.png"
+          mkdir -p "$RUNNER_TEMP/claude-test.sessions/${{ matrix.session }}/images"
+          cp tests/fixtures/test.jpg "$RUNNER_TEMP/claude-test.sessions/${{ matrix.session }}/images/test-card.jpg"
+          cp tests/fixtures/logo-large-rgba.png "$RUNNER_TEMP/claude-test.sessions/${{ matrix.session }}/images/simplex-logo.png"
 
-      # Claude's Bash is limited to single ui commands by the guard hook in claude-test.sh. Claude Code's credential
-      # scrub stays off: on Linux it forces its whole Bash sandbox (bubblewrap, socat), which ui isn't set up for.
+      # Claude's Bash is limited to single ui, peer and record commands by the guard hook in claude-test.sh. Claude
+      # Code's credential scrub stays off: on Linux it forces its whole Bash sandbox (bubblewrap, socat), which ui
+      # isn't set up for.
       - name: Run Claude
         id: claude
+        timeout-minutes: 310
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: 1
+          CLAUDE_SESSION: ${{ matrix.session }}
+          PLATFORM: desktop
+          BACKEND_DIR: ${{ steps.backend.outcome == 'success' && format('{0}/backend', runner.temp) || '' }}
         run: scripts/ci/desktop-linux/claude-test.sh "$RUNNER_TEMP/claude-test" "$RUNNER_TEMP/claude-transcript.jsonl"
 
       - name: Report Claude usage
@@ -430,11 +432,12 @@ jobs:
         if: ${{ !cancelled() && steps.backend.outcome != 'skipped' }}
         run: scripts/ci/desktop-linux/backend.sh stop "$RUNNER_TEMP/backend"
 
+      # claude-test.sh moves a session's files and transcript here only after checking them for the token
       - name: Upload Claude test results
-        if: ${{ !cancelled() }}
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
-          name: desktop-claude-test
+          name: desktop-claude-test-${{ matrix.session }}
           path: |
             ${{ runner.temp }}/claude-test
             ${{ runner.temp }}/claude-transcript.jsonl
@@ -448,8 +451,10 @@ jobs:
         if: ${{ !cancelled() && steps.backend.outcome != 'skipped' }}
         uses: actions/upload-artifact@v7
         with:
-          name: desktop-claude-backend-logs
-          path: ${{ runner.temp }}/backend/*.log
+          name: desktop-claude-backend-logs-${{ matrix.session }}
+          path: |
+            ${{ runner.temp }}/backend/*.log
+            ${{ runner.temp }}/backend/peers/*/commands.log
           retention-days: 3
           if-no-files-found: warn
 
