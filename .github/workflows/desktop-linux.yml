@@ -440,6 +440,8 @@ jobs:
           name: desktop-claude-test-${{ matrix.session }}
           path: |
             ${{ runner.temp }}/claude-test
+            !${{ runner.temp }}/claude-test/**/screens/ocr
+            !${{ runner.temp }}/claude-test/**/*.bin
             ${{ runner.temp }}/claude-transcript.jsonl
             ${{ runner.temp }}/claude-transcript.jsonl.stderr
             ${{ runner.temp }}/claude-transcript.jsonl.guard.log
