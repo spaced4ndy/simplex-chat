@@ -15,6 +15,7 @@
 #   ui wait <text> [secs]         wait up to secs (30) until the text is on screen
 #   ui click <x> <y>              click at x,y
 #   ui right-click <x> <y>        right-click at x,y, e.g. to open a list row's menu
+#   ui drag <x1> <y1> <x2> <y2>   press the mouse at x1,y1, move it to x2,y2 and release it, e.g. to select text
 #   ui click-text <text> [secs]   wait up to secs (20) for the text and click its centre
 #   ui scroll <x> <y> <up|down> [clicks]
 #                                 turn the mouse wheel over x,y, 3 clicks unless given
@@ -261,6 +262,12 @@ case "${1:-}" in
   right-click)
     click "$2" "$3" 3
     log "right-click $2,$3"
+    ;;
+  drag)
+    for n in "$2" "$3" "$4" "$5"; do number "$n"; done
+    xdotool mousemove --sync "$2" "$3" mousedown 1 sleep 0.3 mousemove --sync "$4" "$5" sleep 0.3 mouseup 1
+    sleep 1
+    log "drag $2,$3 to $4,$5"
     ;;
   click-text)
     secs=${3:-20}
