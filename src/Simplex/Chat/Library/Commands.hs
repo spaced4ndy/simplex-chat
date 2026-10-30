@@ -64,7 +64,7 @@ import Simplex.Chat.Badges (BadgeCredential (..), BadgeInfo (..), BadgeMasterKey
 import qualified Simplex.Chat.Badges.Ledger as L
 import Simplex.Chat.Badges.Types (BadgeAlert (..), BadgeAlertKind (..), BadgeIssueError (..), BadgeIssueFailure (..), BadgeState (..), BadgeSubscription (..), OpenStorePurchase (..), StoreReceiptOrigin (..))
 import Simplex.Chat.Badges.Code (badgeCodeText, parseBadgeCode)
-import Simplex.Chat.Badges.Service (BadgeBalance (..), BadgeServiceCommand (..), BadgeServiceErrorCode (..), BadgeServiceRequest (..), BadgeServiceResponse (..), BadgeStatement (..), StatementCreditType (SCCode), StatementDebitType (..), StatementEntry (..), StatementEntryType (..), SubscriptionState (..), currentBadgeServiceVersion)
+import Simplex.Chat.Badges.Service (BadgeBalance (..), BadgeServiceCommand (..), BadgeServiceErrorCode (..), BadgeServiceRequest (..), BadgeServiceResponse (..), BadgeStatement (..), StatementCreditType (SCCode, SCPayment), StatementDebitType (..), StatementEntry (..), StatementEntryType (..), SubscriptionState (..), currentBadgeServiceVersion)
 import Simplex.Chat.Badges.StorePlan (storePlan)
 import Simplex.Chat.Names (SimplexDomainProof (..), SimplexDomainClaim (..), claimDomain, mkDomainClaim)
 import Simplex.Chat.Call
@@ -5650,29 +5650,36 @@ requestBadgeNow user@User {userId} = do
 -- | Test only: each cycle stores a prepaid month as storeRedeemedBadge stores the service's answer, under a key made
 -- for the run, and announces it as a credited store receipt is; the month ends shownSecs later, when the worker retires it.
 testBadgeCycles :: UserId -> Int -> Int -> Int -> CM ()
-testBadgeCycles userId cycleCount hiddenSecs shownSecs = do
-  (issuerPk, issuerSk) <- liftIO bbsKeyGen >>= either (throwCmdError . ("test badge key: " <>)) pure
+testBadgeCycles userId cycleCount hiddenSecs shownSecs =
   replicateM_ cycleCount $ do
     threadDelay $ hiddenSecs * 1000000
     user <- withStore (`getUser` userId)
     g <- asks random
     now <- badgeNow
-    let uuidText = UUID.toText <$> liftIO V4.nextRandom
-    redemptionCode <- uuidText
-    grantId <- uuidText
-    issueId <- uuidText
-    stash@BadgeStash {masterKey} <- withStore' $ \db -> createBadgeCodeRedemption db g user ("test-" <> redemptionCode) now
-    let paidUntil = fromIntegral shownSecs `addUTCTime` now
-        monthStart = L.addMonths (-1) paidUntil
-        granted = L.grantEntry monthStart grantId BTSupporter 1 SCCode (L.emptyEntry monthStart BTSupporter)
-        info = BadgeInfo {badgeType = BTSupporter, badgeExpiry = L.endOfMondayAfter paidUntil, badgeExtra = ""}
-    issued <- maybe (throwCmdError "test badge month was not issued") pure $ L.issueEntry monthStart issueId granted
-    cred <- liftIO (issueBadge testKeyIdx issuerSk $ VerifiedBadgeRequest BadgeRequest {masterKey, badgeInfo = info}) >>= either (throwCmdError . ("test badge: " <>)) pure
-    (present_, _) <- local (withTestKey issuerPk) $ storeRedeemedBadge user stash cred BadgeStatement {entries = [granted, issued], previousEntryId = Nothing} Nothing
+    redemptionCode <- UUID.toText <$> liftIO V4.nextRandom
+    stash <- withStore' $ \db -> createBadgeCodeRedemption db g user ("test-" <> redemptionCode) now
+    (present_, _) <- testCreditStash user stash SCCode shownSecs
     user' <- withStore (`getUser` userId)
     toView . CEvtBadgeChanged user' =<< getUserBadgeState user'
     mapM_ presentUserBadgeToContacts present_
     threadDelay $ shownSecs * 1000000
+
+-- | Test only: a prepaid month on the stash, stored as storeRedeemedBadge stores the service's answer, under a key made for the
+-- call; its rows are dated so that it ends shownSecs from now, when the worker retires it.
+testCreditStash :: User -> BadgeStash -> StatementCreditType -> Int -> CM (Maybe User, ChatResponse)
+testCreditStash user stash@BadgeStash {masterKey} creditType shownSecs = do
+  (issuerPk, issuerSk) <- liftIO bbsKeyGen >>= either (throwCmdError . ("test badge key: " <>)) pure
+  now <- badgeNow
+  let uuidText = UUID.toText <$> liftIO V4.nextRandom
+  grantId <- uuidText
+  issueId <- uuidText
+  let paidUntil = fromIntegral shownSecs `addUTCTime` now
+      monthStart = L.addMonths (-1) paidUntil
+      granted = L.grantEntry monthStart grantId BTSupporter 1 creditType (L.emptyEntry monthStart BTSupporter)
+      info = BadgeInfo {badgeType = BTSupporter, badgeExpiry = L.endOfMondayAfter paidUntil, badgeExtra = ""}
+  issued <- maybe (throwCmdError "test badge month was not issued") pure $ L.issueEntry monthStart issueId granted
+  cred <- liftIO (issueBadge testKeyIdx issuerSk $ VerifiedBadgeRequest BadgeRequest {masterKey, badgeInfo = info}) >>= either (throwCmdError . ("test badge: " <>)) pure
+  local (withTestKey issuerPk) $ storeRedeemedBadge user stash cred BadgeStatement {entries = [granted, issued], previousEntryId = Nothing} Nothing
   where
     testKeyIdx = 65000
     withTestKey pk cc@ChatController {config = cfg@ChatConfig {badgePublicKeys}} =
@@ -5851,7 +5858,12 @@ creditStoreReceipt a userId receiptId stash@BadgeStash {masterKey} invoiceId_ pa
       refuseWhileBadgeHeld user
       sendTarget <- requireBadgeService
       payment' <- maybe (throwChatError $ CEInternalError "held store payment does not decode") pure $ decodeJSON payment
-      requestBadgeStash NRMBackground user sendTarget stash (cmd payment')
+      case payment' of
+        -- test only: the app's test products, credited here after the time a store and the service would take
+        SPGoogle {token = testToken} | "test" `T.isPrefixOf` testToken -> do
+          threadDelay 8000000
+          Right <$> testCreditStash user stash (SCPayment Nothing) 12
+        _ -> requestBadgeStash NRMBackground user sendTarget stash (cmd payment')
     -- a held record whose keys already fund a purchase is a resume of that retired subscription, checked before every send
     resume ri delay purchaseId = do
       user <- withStore $ \db -> getUser db userId
