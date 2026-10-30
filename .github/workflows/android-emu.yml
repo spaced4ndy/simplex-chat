@@ -389,9 +389,16 @@ jobs:
       - name: Boot emulator
         run: scripts/ci/android/emulator.sh start "$RUNNER_TEMP/claude-test/screens"
 
+      # shared storage refuses files for a while after the boot completes
       - name: Add test images
         run: |
-          adb push tests/fixtures/test.jpg /sdcard/Pictures/test-card.jpg
+          deadline=$((SECONDS + 120))
+          until adb push tests/fixtures/test.jpg /sdcard/Pictures/test-card.jpg; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              exit 1
+            fi
+            sleep 3
+          done
           adb push tests/fixtures/logo-large-rgba.png /sdcard/Pictures/simplex-logo.png
           for image in test-card.jpg simplex-logo.png; do
             adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file:///sdcard/Pictures/$image"
