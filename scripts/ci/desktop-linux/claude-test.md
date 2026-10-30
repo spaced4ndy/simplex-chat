@@ -6,7 +6,7 @@ Your working directory is where your output goes. `ui shot <name>` saves `screen
 
 ## What is set up
 
-- The app is already running, on its first screen, with a new, empty database: never run `ui start` or `ui stop`. Begin with `ui shot start` to see it.
+- The app is already running, on its first screen, with a new, empty database: never run `ui start` or `ui stop`. Begin with `ui shot start` to see it. For cases about what happens when the app is restarted, `ui relaunch` quits it and starts it again with its data.
 - Unless the session's first case is about onboarding, onboard first. The first screen has "Create your profile": click it. On "Create profile", click the field "Enter profile name", type `citester`, and click "Create profile". On the database passphrase screen click "Use random passphrase", then "OK" in the alert. Click "Continue", then "Accept" on the screen after it. Wait up to 60 s for the chat list: the right pane shows "Talk to someone".
 - After onboarding, the chat list is in the left pane (x 1 to 389) and chats open in the right pane. The toolbar is at the bottom of the left pane: your profile picture at about 27,730 (your profiles, Settings) and a pencil at about 363,730 (New chat). The search field "Search or paste SimpleX link" appears once there is a chat.
 - The folder `images` in your working directory has `test-card.jpg`, a TV test card 1280×720, and `simplex-logo.png`, the SimpleX logo on a transparent background, for cases that attach images or files: in the app's file dialog, click its "File Name" field, type the absolute path of the file, and press Return. You can Read them to compare with what the app shows.
@@ -25,6 +25,8 @@ Your working directory is where your output goes. `ui shot <name>` saves `screen
 ## The regression cases
 
 The cases of this session (the table at the end) come from the team's release regression table: each is one line written for a person who knows the app, not a list of steps. For each case, work out the shortest way to check what it says in this app, do it, check it, and record the result at once.
+
+No one answers questions during this session: never stop to ask, and never end it before every case of the table is recorded. Each `record` prints the next case; whenever you are unsure which cases are left or what they say, for example after the conversation was compacted, run `record` alone: it lists the cases left, with their text.
 
 1. Read the case. Where it names a gesture of another platform ("swipe (ios) / long press (android)"), use this app's own way to do the same. A case about a version upgrade, a camera, a microphone, a call, push notifications, a second device, a purchase or a badge code is `manual`: record what it needs. Where only a part of a case needs such a thing, check the rest, and say in the note which part was not checked.
 2. Set up what the case needs: contacts, groups and channel subscribers are CLI peers (below); messages, settings and profiles you make in the app.
