@@ -301,7 +301,7 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:
           BADGE_CYCLES_MODE: purchase
-        run: scripts/ci/android/badge-cycles.sh "$RUNNER_TEMP/apk/$APK" "$RUNNER_TEMP/badge-cycles" 10
+        run: scripts/ci/android/badge-cycles.sh "$RUNNER_TEMP/apk/$APK" "$RUNNER_TEMP/badge-cycles" 30
 
       - name: Upload badge screen cycles
         if: ${{ !cancelled() }}

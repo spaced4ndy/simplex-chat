@@ -10,7 +10,7 @@
 # BADGE_CYCLES_SETTINGS, settings as ui start takes them, restarts the app with them first.
 # Every reading keeps its screenshot, tree and text in <output dir>/readings, and readings.log has the page the tree
 # lists and the page the screenshot shows, read by OCR: blank when the middle of the screen is one colour (ink below
-# MIN_INK), unread when OCR finds no page. A change of the listed page is a transition; it fails when a reading after
+# MIN_INK), unread when OCR finds no page, uncarded when Your badge is drawn without its cards. A change of the listed page is a transition; it fails when a reading after
 # its first (which can be taken mid-change) draws another page or nothing. transitions.log has each one.
 # Usage: scripts/ci/android/badge-cycles.sh <apk> <output dir> [cycles] [seconds without] [seconds with]
 
@@ -50,30 +50,35 @@ normalise() {
   tr -cd '[:alnum:]' <<< "$1" | tr '[:upper:]' '[:lower:]'
 }
 
-# the page a text shows: issuing, badge, support or none; the issuing title contains "your badge", so it is checked first
+# the page a text shows: issuing, support, badge or none; the issuing title and the store's "Choose your badge" on the
+# support page both contain "your badge", so those two are checked first
 page_of_text() {
   local text
   text=$(normalise "$1")
   case "$text" in
     *"$(normalise "Issuing your badge")"*) echo issuing ;;
-    *"$(normalise "Your badge")"* | *"$(normalise "shown on your profile")"*) echo badge ;;
     *"$(normalise "Get a badge to send")"*) echo support ;;
+    *"$(normalise "Your badge")"* | *"$(normalise "shown on your profile")"*) echo badge ;;
     *) echo none ;;
   esac
 }
 
-# Prints "<page> <ink>": the page OCR reads on the screenshot, or blank when the spread of grey levels between the bars,
-# which ImageMagick reads as nan when there is none, is below MIN_INK, or unread.
+# Prints "<page> <ink> <margin>": the page OCR reads on the screenshot, or blank when the spread of grey levels between
+# the bars, which ImageMagick reads as nan when there is none, is below MIN_INK, or unread. Your badge is drawn on the
+# grey of a card screen: its left margin reads white (margin above 0.98) only when it was drawn without its cards.
 drawn_page_of() {
-  local w h ink page
+  local w h ink margin page
   read -r w h < <(identify -format '%w %h\n' "$1")
   ink=$(convert "$1" -alpha off -crop "${w}x$((h * 6 / 10))+0+$((h * 15 / 100))" +repage -colorspace Gray -format '%[fx:standard_deviation]' info:)
+  margin=$(convert "$1" -alpha off -crop "$((w * 3 / 100))x$((h * 25 / 100))+$((w / 200))+$((h * 30 / 100))" +repage -colorspace Gray -format '%[fx:mean]' info:)
   case "$ink" in *nan*) ink=0 ;; esac
   page=$(page_of_text "$(tesseract "$1" stdout 2> /dev/null)")
   if [ "$page" = none ]; then
     if awk -v ink="$ink" -v min="$min_ink" 'BEGIN { exit !(ink < min) }'; then page=blank; else page=unread; fi
+  elif [ "$page" = badge ] && awk -v margin="$margin" 'BEGIN { exit !(margin > 0.98) }'; then
+    page=uncarded
   fi
-  echo "$page $ink"
+  echo "$page $ink $margin"
 }
 
 open_settings() {
@@ -185,15 +190,15 @@ judge_transition() {
 n=0
 listed=""
 read_screen() {
-  local reading now drawn ink
+  local reading now drawn ink margin
   n=$((n + 1))
   reading=$readings/$(printf '%04d' "$n")
   UI_OUT=$reading "$ui" shot reading > /dev/null
   listed=$(page_of_text "$(cut -d ' ' -f 2- "$reading/01-reading.txt")")
-  read -r drawn ink <<< "$(drawn_page_of "$reading/01-reading.png")"
+  read -r drawn ink margin <<< "$(drawn_page_of "$reading/01-reading.png")"
   mv "$reading" "$reading-$listed-$drawn"
   now=$(date -u +%H:%M:%S)
-  echo "$now reading $n: listed $listed, drawn $drawn, ink $ink" >> "$out/readings.log"
+  echo "$now reading $n: listed $listed, drawn $drawn, ink $ink, margin $margin" >> "$out/readings.log"
   if [ "$listed" != "$listed_now" ]; then
     judge_transition
     listed_before=$listed_now
