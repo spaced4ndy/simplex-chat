@@ -16,7 +16,7 @@ Your working directory is where your output goes. `ui shot <name>` saves `screen
 
 - **Send a message:** click the message field at the bottom of the right pane, `ui type "<text>"`, then `ui key Return`; `ui key shift+Return` starts a new line.
 - **A chat's info:** click the chat's name at the top of the right pane. Escape closes it and other panes (preferences, member info, a message's info).
-- **A message's menu:** `ui right-click <x> <y>` on the message's text (centre from `ui find`): Reply, Edit, Delete, Info, React, Forward, Select, … A chat's menu in the list: right-click its row.
+- **A message's menu:** `ui right-click <x> <y>` on the message's text (centre from `ui find`): Reply, Edit, Delete, Info, Forward, Select, … Reactions are a row of emoji icons at the top of the menu, shown when the chat allows reactions: OCR doesn't read them, so find them in the screenshot and click one. A chat's menu in the list: right-click its row.
 - **Give the app a link:** `ui clipboard '<link>'`, then the pencil → "Paste link" → "Tap to paste link"; or click the search field and `ui key ctrl+v`.
 - **Get a link from the app:** its "Copy" button, or "Share link", copies it ("Copied to clipboard"); then `ui clipboard` prints it.
 - **Profiles:** the profile picture opens a menu with your profiles by name, "Your chat profiles" (add, hide, delete) and "Settings".
@@ -32,6 +32,10 @@ Your working directory is where your output goes. `ui shot <name>` saves `screen
 - **Business chats:** `peer bob address`, then `peer bob cli '/_address_settings 1 {"businessAddress":true,"autoAccept":{"acceptIncognito":false}}'`, and connect the app to bob's address; the app's own business address is a switch in its address settings, and a peer connects to it.
 - **A peer's preferences for the app:** `peer bob cli '/set voice @citester no'` (always, yes or no; also files, calls, delete, disappear).
 - **A long chat history:** `peer bob many '@citester' 120`. **Text selection:** `ui drag`. **Restart:** `ui relaunch`.
+- **A live message from a peer:** `peer bob live '@citester' 'Hel'`, then `peer bob live-update '@citester' 'Hello'` as often as needed, and `peer bob live-update '@citester' 'Hello all' end` to finish it.
+- **A contact that deleted the app's contact without notifying:** `peer bob delete-contact citester silent`.
+- **Member reports:** the app reports from a group where it is a plain member (the message's menu, Report); the app as an admin gets one from `peer bob report '#team' carol spam '<message>'`, sent by a member peer about another member's message. A member waiting for review is rejected with `peer <admin> remove '#<group>' <member>`.
+- **Passcodes:** when a case sets a passcode or a self-destruct code, choose it yourself and write it in the case's note, so later cases can use it. Exporting the database first asks to set a database passphrase (Settings → Database passphrase): set one and write it in the note.
 
 ## The regression cases
 
