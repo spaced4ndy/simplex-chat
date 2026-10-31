@@ -28,6 +28,8 @@ HELP = """peer <name> <command> [args]
   accept <contact>                       accept a contact request (20 s)
   reject <contact>                       reject a contact request (10 s)
   send <chat> <text> [<line>...]         send a message; each further argument is another line of it (10 s)
+  live <chat> <text>                     start a live message with this text (10 s)
+  live-update <chat> <text> [end]        change the peer's live message in the chat to this text; end finishes it (10 s)
   long-message <chat> <kilobytes>        send a text message of this size, 1 to 64 KB (10 s)
   many <chat> <count>                    send this many numbered messages at once, 1 to 150, e.g. for a long history (20 s)
   reply <chat> <author> <quoted> <text>  reply to the message starting with <quoted> sent by <author>: me, or
@@ -38,6 +40,9 @@ HELP = """peer <name> <command> [args]
   edit <chat> <old> <new>                change the peer's message starting with <old> to <new> (10 s)
   delete <chat> <message>                delete the peer's message starting with <message> for everyone (10 s)
   moderate <group> <member> <message>    delete a member's message starting with <message> for everyone (10 s)
+  report <group> <member> <reason> <message>
+                                         report a member's message starting with <message> to the group's admins;
+                                         reason: spam, content, community, profile, other (10 s)
   image <chat> <test.jpg|logo.png>       send an image: a TV test card 1280x720, or the SimpleX logo on transparency (30 s)
   file <chat> <test.pdf|test.txt|test.jpg|logo.png>  send a file (30 s)
   text-file <chat> <file name> <line>... send a text file with these lines, e.g. notes.md (30 s)
@@ -60,7 +65,7 @@ HELP = """peer <name> <command> [args]
   welcome <group> <text>                 set the group's welcome message (10 s)
   block-for-all <group> <member>         block a member for all (10 s)
   unblock-for-all <group> <member>       unblock a member for all (10 s)
-  delete-contact <contact>               delete a contact and notify them (10 s)
+  delete-contact <contact> [silent]      delete a contact and notify them, or with silent without notifying them (10 s)
   delete-group <group>                   delete a group (10 s)
   clear <chat>                           clear a chat's messages for the peer (5 s)
   profile <display name> [<full name>]   change the peer's profile names (10 s)
@@ -83,6 +88,7 @@ GROUP_NAME = re.compile(r"[A-Za-z0-9_]{1,30}")
 FILE_NAME = re.compile(r"[^/\\\x00-\x1f\x7f]{1,60}")
 LINK = re.compile(r"(https://[A-Za-z0-9.-]+/[a-z]*#|simplex:/[a-z]*#)[A-Za-z0-9_\-/=%.:?&+@~#]+")
 ROLES = ["owner", "admin", "moderator", "member", "observer"]
+REASONS = ["spam", "content", "community", "profile", "other"]
 EMOJI = {"like": ("👍", "+"), "dislike": ("👎", "-"), "smile": ("😀", ")"), "sad": ("😢", ","), "heart": ("❤", "*"), "rocket": ("🚀", "^")}
 FIXTURES = {
     "test.jpg": "tests/fixtures/test.jpg",
@@ -152,6 +158,12 @@ def role(value):
     return value
 
 
+def reason(value):
+    if value not in REASONS:
+        raise Usage(f"reason {value!r} is not one of {', '.join(REASONS)}")
+    return value
+
+
 def emoji(value):
     for name, (char, shortcut) in EMOJI.items():
         if value in (name, char):
@@ -210,9 +222,20 @@ class Peer:
             raise Usage(f"the peer has no chat {ref}: see `peer {self.name} chats`")
         return f"{ref[0]}{row[0]}"
 
-    def send_json(self, ref, messages, secs):
+    def live_item_id(self, chat_id):
+        column = {"@": "contact_id", "#": "group_id"}[chat_id[0]]
+        with sqlite3.connect(f"file:{self.db}_chat.db?mode=ro", uri=True) as db:
+            row = db.execute(
+                f"SELECT chat_item_id FROM chat_items WHERE {column} = ? AND item_sent = 1 AND item_live = 1 ORDER BY chat_item_id DESC LIMIT 1",
+                (int(chat_id[1:]),),
+            ).fetchone()
+        if row is None:
+            raise Usage(f"the peer has no live message in this chat: start one with `peer {self.name} live`")
+        return row[0]
+
+    def send_json(self, ref, messages, secs, live=False):
         check(CHAT, ref, "chat")
-        return self.run(f"/_send {self.chat_id(ref)} json {json.dumps(messages)}", secs)
+        return self.run(f"/_send {self.chat_id(ref)}{' live=on' if live else ''} json {json.dumps(messages)}", secs)
 
     def write_file(self, name, data):
         out = os.path.join(self.home, "out")
@@ -268,6 +291,24 @@ def send(p, ref, *lines):
     if len(lines) == 1 and lines[0].isascii():
         return p.run(f"{chat(ref)} {lines[0]}", 10)
     return p.send_json(ref, [{"msgContent": {"type": "text", "text": "\n".join(lines)}}], 10)
+
+
+def live(p, ref, msg):
+    return p.send_json(ref, [{"msgContent": {"type": "text", "text": text(msg)}}], 10, live=True)
+
+
+def live_update(p, ref, msg, end=None):
+    if end not in (None, "end"):
+        raise Usage(f"live-update ends with end or nothing, not {end!r}")
+    check(CHAT, ref, "chat")
+    chat_id = p.chat_id(ref)
+    return p.run(f"/_update item {chat_id} {p.live_item_id(chat_id)} live={'off' if end else 'on'} text {text(msg)}", 10)
+
+
+def delete_contact(p, c, silent=None):
+    if silent not in (None, "silent"):
+        raise Usage(f"delete-contact ends with silent or nothing, not {silent!r}")
+    return p.run(f"/d {member(c)}" + (" notify=off" if silent else ""), 10)
 
 
 def long_message(p, ref, kilobytes):
@@ -359,6 +400,8 @@ COMMANDS = {
     "accept": lambda p, c: p.run(f"/ac {member(c)}", 20),
     "reject": lambda p, c: p.run(f"/rc {member(c)}", 10),
     "send": send,
+    "live": live,
+    "live-update": live_update,
     "long-message": long_message,
     "many": many,
     "reply": reply,
@@ -367,6 +410,7 @@ COMMANDS = {
     "edit": edit,
     "delete": lambda p, ref, msg: p.run(f"\\ {chat(ref)} {text(msg, 'message')}", 10),
     "moderate": lambda p, g, m, msg: p.run(f"\\\\ {group(g)} {member(m)} {text(msg, 'message')}", 10),
+    "report": lambda p, g, m, r, msg: p.run(f"/report {group(g)} {member(m)} {reason(r)} {text(msg, 'message')}", 10),
     "image": lambda p, ref, f: p.run(f"/img {chat(ref)} {fixture(f, IMAGES)}", 30),
     "file": lambda p, ref, f: p.run(f"/f {chat(ref)} {fixture(f, list(FIXTURES))}", 30),
     "text-file": text_file,
@@ -388,7 +432,7 @@ COMMANDS = {
     "welcome": lambda p, g, t: p.run(f"/set welcome {group(g)} {text(t)}", 10),
     "block-for-all": lambda p, g, m: p.run(f"/block for all {group(g)} {member(m)}", 10),
     "unblock-for-all": lambda p, g, m: p.run(f"/unblock for all {group(g)} {member(m)}", 10),
-    "delete-contact": lambda p, c: p.run(f"/d {member(c)}", 10),
+    "delete-contact": delete_contact,
     "delete-group": lambda p, g: p.run(f"/d {group(g)}", 10),
     "clear": lambda p, ref: p.run(f"/clear {chat(ref)}", 5),
     "profile": profile,
