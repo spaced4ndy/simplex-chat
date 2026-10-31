@@ -35,6 +35,7 @@ Your working directory is where your output goes. `ui shot <name>` saves `screen
 - **A live message from a peer:** `peer bob live '@citester' 'Hel'`, then `peer bob live-update '@citester' 'Hello'` as often as needed, and `peer bob live-update '@citester' 'Hello all' end` to finish it.
 - **A contact that deleted the app's contact without notifying:** `peer bob delete-contact citester silent`.
 - **Member reports:** the app reports from a group where it is a plain member (the message's menu, Report); the app as an admin gets one from `peer bob report '#team' carol spam '<message>'`, sent by a member peer about another member's message. A member waiting for review is rejected with `peer <admin> remove '#<group>' <member>`.
+- **A direct contact with a group member:** when the app sends a member a direct message or a contact request from the group, the member peer runs `peer <member> wait 20`, then `peer <member> accept-member-contact citester`.
 - **Passcodes:** when a case sets a passcode or a self-destruct code, choose it yourself and write it in the case's note, so later cases can use it. Exporting the database first asks to set a database passphrase (Settings → Database passphrase): set one and write it in the note.
 
 ## The regression cases
