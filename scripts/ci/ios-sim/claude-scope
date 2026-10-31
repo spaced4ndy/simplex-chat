@@ -5,11 +5,13 @@
 # backend: yes when the cases use the test backend; a run that asks for Claude must then start it too.
 # max-turns, max-budget-usd and max-minutes bound each session.
 backend: yes
-model: claude-haiku-5-5
-sessions: retry-1
+model: claude-sonnet-5-5
+sessions: retry-1 retry-2
 parallel: 1
-cases-retry-1: 484, 561, 562, 563, 564, 631, 633, 634, 658, 241, 242, 243, 362, 700, 701, 703, 149, 150, 153, 166, 167, 177, 198, 204, 209, 256, 297, 307, 312, 313, 360, 399, 407, 408, 410, 412, 414, 416, 417, 421, 424, 441, 443, 444, 448, 450, 453, 454, 455, 458, 459, 427, 429, 674
+cases-retry-1: 641, 643, 644, 645, 647, 660, 661, 651, 653, 461, 462, 463, 486, 487, 491, 495, 509, 513, 515, 516, 567, 568, 570, 604, 618, 619
 plan-retry-1: plan-retry-1.md
+cases-retry-2: 620, 633, 634, 153, 209, 297, 307, 362, 399, 410, 417, 421, 424, 441, 443, 444, 448, 450, 453, 454, 455, 458, 459, 427, 429, 674
+plan-retry-2: plan-retry-2.md
 max-turns: 1500
-max-budget-usd: 20
-max-minutes: 150
+max-budget-usd: 40
+max-minutes: 160

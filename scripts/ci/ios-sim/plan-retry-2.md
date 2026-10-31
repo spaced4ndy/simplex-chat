@@ -7,6 +7,7 @@
 - **Get a link from the app:** its "Copy" button, or "Share link" and "Copy" in the share sheet; then `ui clipboard` prints it.
 - A message's menu: `ui long-press` on the message's text; a chat's actions in the list: swipe its row (`ui swipe`) or long-press it.
 - **Peers can do much more than accept connections:** they create groups and group links, invite, join, change roles, send reactions, replies, edits, deletions, files, images, voice and live messages, and report messages; `peer` alone lists every command. Earlier sessions recorded cases `manual` saying the peers had no group, reaction or delete commands: they have them, so set such cases up with peers and run them. A group with peers: `peer alice group team`, `peer alice invite '#team' '@citester' admin` (the app accepts the invitation), then `peer alice invite '#team' '@bob'` and `peer bob join '#team'` for more members.
+- **A direct contact with a group member:** when the app sends a member a direct message or a contact request from the group, the member peer runs `peer <member> wait 20`, then `peer <member> accept-member-contact citester`.
 - **Delivery receipts:** Settings → Your privacy → More privacy → "Send delivery receipts to" (contacts, groups); a contact's or group's own setting is in its info.
 - **Incognito:** on the 1-time link, address and connect screens, the profile row lets you choose Incognito.
 - **A peer joins a group or channel by its link** with `peer <name> connect '<link>'`; `peer <name> join` only accepts an invitation.
@@ -59,69 +60,29 @@ The `peer` helper runs CLI clients that act as contacts, group members and chann
 
 | Row | Section | Case |
 |---|---|---|
-| 460 | groups | sending direct message to member w/t contact - send / receive invitation (requires group pref "direct messages") |
-| 461 | groups | open contact via "connected directly" chat item |
-| 462 | groups | delete contact with group member, send direct message to group member - invitation is sent, contact is created |
-| 463 | groups | member deletes contact with you, sends direct message - contact is kept with security code changed |
-| 466 | groups | can delete contact while it is in group(s) |
-| 467 | groups | switch group member to a different server, send/receive message |
-| 469 | groups | abort connection switch with group member |
-| 483 | groups | user profile update is sent to members on next message in group, member applies update if has no contact |
-| 484 | groups | report another member's message, admin receives report, other members don't receive it |
-| 485 | groups | send report with different reasons; with comment |
-| 486 | groups | as admin moderate reported message, report is archived |
-| 487 | groups | archive report without moderating (for self, for all) |
-| 489 | groups | be mentioned by other member, chat is marked with mention in chat list, mention is blue in chat |
-| 490 | groups | auto-accept group invitations (Privacy & security -> Auto-accept -> Group invitations), per profile - joined automatically |
-| 491 | groups | invitation to another group sent to group member (CLI) - shown as "For you only", can be accepted: CLI creates groups g1 (direct messages allowed) and g2, app user joins g1; in CLI `/i #g1 <app user>` (g1 group ID, member ID), `/i #g2` (g2 group ID), `/_add #<g2 ID> #<g1 ID> <member ID> member` - app gets invitation to g2 in g1 marked "For you only", accepts, joins g2 |
-| 495 | channels | broadcast different types of messages - files, images, etc. |
-| 509 | channels | owner promotes subscriber to contributor -> this subscriber can now send messages -> other subscribers receive them; owner demotes contributor back to subscriber -> subscriber can't send |
-| 513 | channels | owner makes subscriber moderator - member info shows Moderator; moderator sees subscribers list |
-| 514 | channels | moderator deletes message for all - deleted for all subscribers |
-| 515 | channels | owner turns on Sign messages (channel preferences) - confirmation alert; new messages show signature mark, item info shows "Signed & verified" |
-| 516 | channels | subscriber who joins after signing is turned on sees "signature missing" on earlier messages, tap shows alert |
-| 530 | message forwarding | single message can't be forwarded if underlying file doesn't exist (e.g. delete via database settings) |
-| 538 | message forwarding | multi select - confirming to send messages without files should forward messages texts; for missing images, image previews should also be forwarded |
-| 542 | message forwarding | multi select - all messages forwarded to a chat should have their delivery status updated (single/double tick, group message info via context menu - per member statuses) |
-| 558 | incognito mode & contact aliases | incognito mode persisted across sessions (turn on, reopen, turn off, reopen) |
-| 559 | incognito mode & contact aliases | incognito icon is shown in incognito conversations |
-| 561 | incognito mode & contact aliases | paste link to connect - incognito/not |
-| 562 | incognito mode & contact aliases | create invitation link - incognito/not |
-| 563 | incognito mode & contact aliases | connect via group link via paste/scan - incognito/not |
-| 564 | incognito mode & contact aliases | connect via external link - incognito/not |
-| 565 | incognito mode & contact aliases | connect via chat item with link - incognito/not |
-| 566 | incognito mode & contact aliases | connect via contact address - incognito/not |
-| 567 | incognito mode & contact aliases | accept contact request via swipe (ios) / long press (android) - incognito/not |
-| 568 | incognito mode & contact aliases | accept contact request via click - incognito/not |
-| 570 | incognito mode & contact aliases | connect to group member via address (group member info page) - incognito/not |
-| 574 | incognito mode & contact aliases | create invitation link in incognito mode, turn it off - incognito profile should be shared |
-| 576 | incognito mode & contact aliases | turn on incognito mode after receiving contact request and accept - incognito profile should be shared |
-| 604 | database encryption | remove from Keychain/Keystore; if re-enabled saved on passhprase change or on start |
-| 618 | group links | opening chat with "group link" contact and sending message makes it stay in chat list + after reload (chat used) |
-| 619 | group links | invited via group link chat item |
 | 620 | group links | group link pending connection - alias can't be set |
-| 627 | member screening | connect to group with member review as member, get accepted to group |
-| 628 | member screening | connect to group with member review as observer, can send messages in support chat, get accepted to group |
-| 629 | member screening | when connecting to group with admission, opening chat opens support chat view automatically; going back goes to chat list |
-| 630 | member screening | group moderators see flag in chat list if unanswered support chats are present, bar with number of support chats in chat view; can open support chat list via bar |
-| 631 | member screening | group member sees flag in chat list if support chat has unread messages, number of unread support chat messages in chat view; can open support chat via bar |
 | 633 | member screening | new messages in support chats increase counter for moderators (add flag in chat list if it's the only unanswered chat) |
 | 634 | member screening | if another moderator answers in support chat counter is decreased for other moderators (flag is removed if it was the only unanswered chat) |
-| 635 | member screening | existing member (not in review, just current member) can start support chat with moderators via group info view |
-| 641 | business chats | connect to other client's business address - conversation should have business avatar / icon (without avatar - briefcase) |
-| 643 | business chats | edit chat profile, edit welcome message (on chat info view), create group link buttons are not shown |
-| 644 | business chats | as business add other team member to chat, other team member should have chat with client's avatar |
-| 645 | business chats | as customer add friend to chat (requires business member giving you admin role), friend should have chat with business' avatar |
-| 647 | business chats | connecting to simplex chat team preset contact should create business chat (since 6.2) |
-| 651 | connection plan | connect to own address |
-| 653 | connection plan | paste known address into chat list search, contact chat is filtered, can be opened |
-| 657 | connection plan | connect to known group link, group chat opens |
-| 658 | connection plan | paste known group link into chat list search, group chat is filtered, can be opened |
-| 660 | connection plan | connect to known business address - business chat opens |
-| 661 | connection plan | paste known business address into chat list search, business chat is filtered, can be opened |
-| 670 | user profiles | in user sheet profiles are shown in order of use |
+| 153 | editing and deletion | send disappearing message - deleted for both after ttl (on recipient side after read) |
+| 209 | user contact address | shared address is visible in contact info, group member info (since 5.5 - only if member has associated contact) |
+| 297 | operators, conditions & smp/xftp servers advanced configuration | operators are enabled/disabled for all user profiles at once:<br>configure a custom enabled server for each protocol for current user, then disable all operators / role in a single enabled operator with that role - should show validation error for other user and prohibit save |
+| 307 | chat relays configuration | enabled chat relays are chosen during channel creation (e.g. disable preset relays) |
+| 362 | files | tap file while it is being received - opens when received |
+| 399 | voice messages | voice message chat item text in quotes, compose context previews, chat previews, notifications |
+| 410 | voice messages | disabled voice message button shows alert how to allow - if user disabled; contact disabled; group owner |
+| 417 | user / contact / group preferences | updating user preferences doesn't update incognito contacts |
+| 421 | user / contact / group preferences | enable preference via offer item |
+| 424 | user / contact / group preferences | files not allowed based on group preference |
+| 441 | groups | create group (can set picture, can add members or skip) |
+| 443 | groups | add member(s) - sent and received group invitations are created, have group image |
+| 444 | groups | group invitation can be accepted on chat and on chat item (on chat it can also be deleted) |
+| 448 | groups | add members permissions: owners - in all roles, admins - below owner, members - not allowed |
+| 450 | groups | remove member permissions: owners - allowed, admin - in role below owner, member - not allowed |
+| 453 | groups | can't remove not current member (who left or was removed) |
+| 454 | groups | edit group profile (display, full names, image) - group is updated, update is received by members |
+| 455 | groups | inactive group indicator if user left, was removed or group was deleted |
+| 458 | groups | open direct chat that is in list view, out of list view, not in chat list (new in model - network status connected) |
+| 459 | groups | contacts with group members (other than host/invitee) are not created (since 5.3-beta.8) |
+| 427 | db export / import | database view - export db, import db |
+| 429 | db export / import | chat archive view - save archive, delete archive |
 | 674 | user profiles | delete last profile |
-| 700 | supporter badges | Support SimpleX opens from chat list banner and from settings; "How badges protect your privacy" opens |
-| 701 | supporter badges | chat list banner - close button appears only after banner was opened |
-| 703 | supporter badges | redeem wrong code / already used code - clear error, not generic failure |
-| 707 | supporter badges | ios: "Choose your badge" opens badge page in browser; no in-app purchase, no Restore purchases |
