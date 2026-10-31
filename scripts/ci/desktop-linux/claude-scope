@@ -4,12 +4,10 @@
 # backend: yes when the prompt uses the test backend; a run that asks for Claude must then start it too.
 # max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
 backend: yes
-sessions: retry-1 retry-2
-parallel: 2
-cases-retry-1: 52, 117, 149, 150, 227, 258, 270, 271, 429, 484, 485, 486, 487
+sessions: retry-1
+parallel: 1
+cases-retry-1: 23, 183, 423, 449, 617, 619
 plan-retry-1: plan-retry-1.md
-cases-retry-2: 488, 541, 558, 570, 571, 576, 619, 629, 644, 645, 672, 676
-plan-retry-2: plan-retry-2.md
 max-turns: 1500
 max-budget-usd: 20
 max-minutes: 290
