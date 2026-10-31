@@ -15,7 +15,9 @@
 - **A live message from a peer:** `peer bob live '@citester' 'Hel'`, then `peer bob live-update '@citester' 'Hello'` as often as needed, and `peer bob live-update '@citester' 'Hello all' end` to finish it.
 - **A contact that deleted the app's contact without notifying:** `peer bob delete-contact citester silent`.
 - **Member reports:** the app reports from a group where it is a plain member (the message's menu, Report); the app as an admin gets one from `peer bob report '#team' carol spam '<message>'`, sent by a member peer about another member's message. A member waiting for review is rejected with `peer <admin> remove '#<group>' <member>`.
-- **Passcodes:** when a case sets a passcode or a self-destruct code, choose it yourself and write it in the case's note, so later cases can use it.
+- **Passcodes:** when a case sets a passcode or a self-destruct code, choose it yourself and write it in the case's note, so later cases can use it. The simulator's device passcode prompt accepts any input.
+- **Row 619:** the "invited via your group link" item is shown to the group link's owner: the app creates a group and its link, a new peer joins by it (`peer dave connect '<link>'`), and the app's group chat shows the item.
+- **Row 23:** the notice offering SimpleX Lock shows at a later chat start (on iOS the second), only while the lock is off and the profile has 3 or more contacts: make 3 contacts, keep the lock off, and `ui relaunch` twice.
 
 ## The regression cases
 
@@ -58,6 +60,7 @@ The `peer` helper runs CLI clients that act as contacts, group members and chann
 | Row | Section | Case |
 |---|---|---|
 | 13 | create profile -> welcome page, onboarding | full name is allowed to have spaces |
+| 23 | create profile -> welcome page, onboarding | lock - shows notice on next (ios - on 2nd) chat start, turn on (since 5.0 - can choose system / passcode) (3+ contacts) |
 | 52 | add / accept contact, send messages | send message to contact that deleted you without notifying - should show error |
 | 66 | short links data | scanning address link shows open chat alert, open, connect with message; send messages |
 | 67 | short links data | scanning address link shows open chat alert, open, connect without message; send messages |

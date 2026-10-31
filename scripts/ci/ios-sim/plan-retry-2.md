@@ -15,7 +15,9 @@
 - **A live message from a peer:** `peer bob live '@citester' 'Hel'`, then `peer bob live-update '@citester' 'Hello'` as often as needed, and `peer bob live-update '@citester' 'Hello all' end` to finish it.
 - **A contact that deleted the app's contact without notifying:** `peer bob delete-contact citester silent`.
 - **Member reports:** the app reports from a group where it is a plain member (the message's menu, Report); the app as an admin gets one from `peer bob report '#team' carol spam '<message>'`, sent by a member peer about another member's message. A member waiting for review is rejected with `peer <admin> remove '#<group>' <member>`.
-- **Passcodes:** when a case sets a passcode or a self-destruct code, choose it yourself and write it in the case's note, so later cases can use it.
+- **Passcodes:** when a case sets a passcode or a self-destruct code, choose it yourself and write it in the case's note, so later cases can use it. The simulator's device passcode prompt accepts any input.
+- **Row 619:** the "invited via your group link" item is shown to the group link's owner: the app creates a group and its link, a new peer joins by it (`peer dave connect '<link>'`), and the app's group chat shows the item.
+- **Row 23:** the notice offering SimpleX Lock shows at a later chat start (on iOS the second), only while the lock is off and the profile has 3 or more contacts: make 3 contacts, keep the lock off, and `ui relaunch` twice.
 
 ## The regression cases
 
@@ -96,6 +98,7 @@ The `peer` helper runs CLI clients that act as contacts, group members and chann
 | 576 | incognito mode & contact aliases | turn on incognito mode after receiving contact request and accept - incognito profile should be shared |
 | 604 | database encryption | remove from Keychain/Keystore; if re-enabled saved on passhprase change or on start |
 | 618 | group links | opening chat with "group link" contact and sending message makes it stay in chat list + after reload (chat used) |
+| 619 | group links | invited via group link chat item |
 | 620 | group links | group link pending connection - alias can't be set |
 | 627 | member screening | connect to group with member review as member, get accepted to group |
 | 628 | member screening | connect to group with member review as observer, can send messages in support chat, get accepted to group |
