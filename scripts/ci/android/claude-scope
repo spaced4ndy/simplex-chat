@@ -6,7 +6,7 @@
 backend: yes
 sessions: retry-1
 parallel: 1
-cases-retry-1: 23, 204, 619
+cases-retry-1: 460, 461, 462
 plan-retry-1: plan-retry-1.md
 max-turns: 1500
 max-budget-usd: 20
