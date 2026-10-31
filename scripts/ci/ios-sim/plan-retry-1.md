@@ -59,32 +59,22 @@ The `peer` helper runs CLI clients that act as contacts, group members and chann
 
 | Row | Section | Case |
 |---|---|---|
-| 13 | create profile -> welcome page, onboarding | full name is allowed to have spaces |
-| 23 | create profile -> welcome page, onboarding | lock - shows notice on next (ios - on 2nd) chat start, turn on (since 5.0 - can choose system / passcode) (3+ contacts) |
-| 52 | add / accept contact, send messages | send message to contact that deleted you without notifying - should show error |
-| 66 | short links data | scanning address link shows open chat alert, open, connect with message; send messages |
-| 67 | short links data | scanning address link shows open chat alert, open, connect without message; send messages |
-| 71 | short links data | scanning business chat link shows open chat alert, open, connect, send messages |
-| 73 | short links data | scanning group link shows open chat alert, open, connect, send messages |
-| 97 | post-quantum encryption | test compression - send messages close to ~15 KB limit (maxEncodedMsgLength - accounting for metadata):<br>profile update with image, large 15 KB text message - both in conversations with and without PQ |
-| 99 | delivery receipts | enable / disable contact receipts on profile level |
-| 100 | delivery receipts | enable / disable group receipts on profile level |
-| 101 | delivery receipts | enable / disable on contact level (only affects one contact) |
-| 102 | delivery receipts | enable / disable on group level (only affects one group) |
-| 103 | delivery receipts | keep contact overrides when changing on profile level |
-| 104 | delivery receipts | don't keep contact overrides when changing on profile level |
-| 105 | delivery receipts | keep group overrides when changing on profile level |
-| 106 | delivery receipts | don't keep group overrides when changing on profile level |
-| 108 | delivery receipts | receive receipts from group member - statuses correctly displayed on message info view |
-| 109 | delivery receipts | update / live message doesn't remove receipt |
-| 113 | sending message replies, reactions | reply in group chat to member's message, check on 3rd user's, check after reopen on all 3 |
-| 114 | sending message replies, reactions | reply in group chat to user's message, check on 3rd user's, check after reopen on all 3 |
-| 118 | sending message replies, reactions | react with same reaction (by tapping on other's reaction) |
-| 127 | editing and deletion | can edit the message that was deleted on the recipient side, it arrives as new |
-| 132 | editing and deletion | can delete message that was deleted by sender |
-| 133 | editing and deletion | group moderation - can delete other member's message as admin |
-| 135 | editing and deletion | group moderation - message is permanently deleted / marked deleted according to preference |
-| 142 | editing and deletion | send live message - updated on recipient side |
+| 484 | groups | report another member's message, admin receives report, other members don't receive it |
+| 561 | incognito mode & contact aliases | paste link to connect - incognito/not |
+| 562 | incognito mode & contact aliases | create invitation link - incognito/not |
+| 563 | incognito mode & contact aliases | connect via group link via paste/scan - incognito/not |
+| 564 | incognito mode & contact aliases | connect via external link - incognito/not |
+| 631 | member screening | group member sees flag in chat list if support chat has unread messages, number of unread support chat messages in chat view; can open support chat via bar |
+| 633 | member screening | new messages in support chats increase counter for moderators (add flag in chat list if it's the only unanswered chat) |
+| 634 | member screening | if another moderator answers in support chat counter is decreased for other moderators (flag is removed if it was the only unanswered chat) |
+| 658 | connection plan | paste known group link into chat list search, group chat is filtered, can be opened |
+| 241 | settings | advanced network settings - change, save, revert, reset, should reconnect |
+| 242 | settings | advanced network settings - set proxy timeouts (ios) / enable proxy (android, resets to different values) |
+| 243 | settings | protect screen setting - preference on/off, hides sheets/subviews |
+| 362 | files | tap file while it is being received - opens when received |
+| 700 | supporter badges | Support SimpleX opens from chat list banner and from settings; "How badges protect your privacy" opens |
+| 701 | supporter badges | chat list banner - close button appears only after banner was opened |
+| 703 | supporter badges | redeem wrong code / already used code - clear error, not generic failure |
 | 149 | editing and deletion | delete live message while live on recipient side - created as new |
 | 150 | editing and deletion | quote live message while live on recipient side - quoted with updated content |
 | 153 | editing and deletion | send disappearing message - deleted for both after ttl (on recipient side after read) |
@@ -94,16 +84,12 @@ The `peer` helper runs CLI clients that act as contacts, group members and chann
 | 198 | user contact address | accept request from new chat sheet |
 | 204 | user contact address | "contact already exists" alert when connecting via contact request |
 | 209 | user contact address | shared address is visible in contact info, group member info (since 5.5 - only if member has associated contact) |
-| 241 | settings | advanced network settings - change, save, revert, reset, should reconnect |
-| 242 | settings | advanced network settings - set proxy timeouts (ios) / enable proxy (android, resets to different values) |
-| 243 | settings | protect screen setting - preference on/off, hides sheets/subviews |
 | 256 | subscriptions summary indicator | data updates in real time (e.g. on start), can open server for detailed statistics, can toggle current user/all users |
 | 297 | operators, conditions & smp/xftp servers advanced configuration | operators are enabled/disabled for all user profiles at once:<br>configure a custom enabled server for each protocol for current user, then disable all operators / role in a single enabled operator with that role - should show validation error for other user and prohibit save |
 | 307 | chat relays configuration | enabled chat relays are chosen during channel creation (e.g. disable preset relays) |
 | 312 | markdown | SimpleX links - different display/interaction mode in settings |
 | 313 | markdown | SimpleX links - link with untrusted domain is colored red (in browser mode for the links) |
 | 360 | files | media previews - can be viewed and interacted from chat list preview (image, video, file, voice message) |
-| 362 | files | tap file while it is being received - opens when received |
 | 399 | voice messages | voice message chat item text in quotes, compose context previews, chat previews, notifications |
 | 407 | voice messages | send voice message to group - received, can be played by all members |
 | 408 | voice messages | voice messages not allowed based on preference |
@@ -114,8 +100,6 @@ The `peer` helper runs CLI clients that act as contacts, group members and chann
 | 417 | user / contact / group preferences | updating user preferences doesn't update incognito contacts |
 | 421 | user / contact / group preferences | enable preference via offer item |
 | 424 | user / contact / group preferences | files not allowed based on group preference |
-| 427 | db export / import | database view - export db, import db |
-| 429 | db export / import | chat archive view - save archive, delete archive |
 | 441 | groups | create group (can set picture, can add members or skip) |
 | 443 | groups | add member(s) - sent and received group invitations are created, have group image |
 | 444 | groups | group invitation can be accepted on chat and on chat item (on chat it can also be deleted) |
@@ -126,3 +110,6 @@ The `peer` helper runs CLI clients that act as contacts, group members and chann
 | 455 | groups | inactive group indicator if user left, was removed or group was deleted |
 | 458 | groups | open direct chat that is in list view, out of list view, not in chat list (new in model - network status connected) |
 | 459 | groups | contacts with group members (other than host/invitee) are not created (since 5.3-beta.8) |
+| 427 | db export / import | database view - export db, import db |
+| 429 | db export / import | chat archive view - save archive, delete archive |
+| 674 | user profiles | delete last profile |
