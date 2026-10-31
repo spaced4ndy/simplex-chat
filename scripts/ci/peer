@@ -27,6 +27,7 @@ HELP = """peer <name> <command> [args]
   connect <link>                         connect via a link from the app: 1-time link, address, group or channel link (30 s)
   accept <contact>                       accept a contact request (20 s)
   reject <contact>                       reject a contact request (10 s)
+  accept-member-contact <contact>        accept a group member's request to become a direct contact (10 s)
   send <chat> <text> [<line>...]         send a message; each further argument is another line of it (10 s)
   live <chat> <text>                     start a live message with this text (10 s)
   live-update <chat> <text> [end]        change the peer's live message in the chat to this text; end finishes it (10 s)
@@ -399,6 +400,7 @@ COMMANDS = {
     "connect": lambda p, link: p.run(f"/c {check(LINK, link, 'link')}", 30),
     "accept": lambda p, c: p.run(f"/ac {member(c)}", 20),
     "reject": lambda p, c: p.run(f"/rc {member(c)}", 10),
+    "accept-member-contact": lambda p, c: p.run(f"/_accept member contact {p.chat_id('@' + check(MEMBER, c.lstrip('@'), 'contact'))}", 10),
     "send": send,
     "live": live,
     "live-update": live_update,
