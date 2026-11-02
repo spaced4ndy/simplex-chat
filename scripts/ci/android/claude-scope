@@ -4,7 +4,7 @@
 # model, max-turns and max-budget-usd (optional) choose the model and bound the session; claude-test.sh uses the
 # workflow's CLAUDE_MODEL, 60 and 3 when they're absent.
 backend: no
-prompt: claude-test-redeem.md
+prompt: claude-test-banner.md
 model: claude-sonnet-5-5
 max-turns: 150
 max-budget-usd: 12
