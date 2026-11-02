@@ -28,11 +28,11 @@ A Google APIs x86_64 system image of API 34 (revision 14) with KVM, on the x86_6
 
 ## Scripts
 
-- `ui`: the UI driver, with desktop's command names: text and positions from uiautomator's accessibility tree, taps and keys with adb. `ui` alone prints its commands: start (with app settings), shot, text, tree, find, wait, click, click-text, scroll, type, key, layout (the `OneHandUI` preference and a restart), relaunch, text-size, do, stop. `screen-tree.py` reads the tree; `prefs.py` writes the settings, which only a debug build accepts (`run-as`).
+- `ui`: the UI driver, with desktop's command names: text and positions from uiautomator's accessibility tree, taps and keys with adb. `ui` alone prints its commands: start (with app settings), shot, text, tree, find, wait, click, click-text, scroll, type, key, layout (the `OneHandUI` preference and a restart), relaunch, text-size, display (a phone in portrait, or a tablet in landscape: the same pixels at a lower density, rotated), burst (screenshots as fast as the emulator gives them from a restart, with a contact sheet), do, stop. `screen-tree.py` reads the tree; `prefs.py` writes the settings, which only a debug build accepts (`run-as`).
 - `smoke-test.sh <apk> <out dir> [start|onboarding|layouts|backend]`: the scripted cases; the default is onboarding, a local group, both layouts, and `tests/fixtures/test.jpg` and `logo-large-rgba.png` pushed to Pictures, picked in the system's picker, resized by the core, previewed and sent in the group. Onboarding on Android includes the app's instant notifications alert and the system's battery dialog. `backend` also adds the test SMP server under Your servers and checks that it passes Test servers.
 - `install-sdk.sh`, `emulator.sh`: the emulator, above.
 - `build-core.sh`, `install-core.sh`, `release-apk.sh`: builds and the release.
-- `claude-test.md` (the prompt) and `claude-scope` (whether it uses the test backend): the Claude job, which runs desktop-linux's `claude-test.sh`, `claude-guard.py` and `claude-usage.py`.
+- `claude-test.md` (the prompt) and `claude-scope` (whether it uses the test backend, and optionally another prompt in this directory, the model and the session's bounds): the Claude job, which runs desktop-linux's `claude-test.sh`, `claude-guard.py` and `claude-usage.py`.
 
 ## The test backend
 
