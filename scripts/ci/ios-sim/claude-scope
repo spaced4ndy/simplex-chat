@@ -4,9 +4,9 @@
 # device-test-plan.md unless set; entries-<session> (optional): the directory entries and names its cases use.
 # backend: yes when the cases use the test backend; a run that asks for Claude must then start it too.
 # max-turns, max-budget-usd and max-minutes bound each session.
-backend: yes
+backend: no
 model: claude-sonnet-5-5
-sessions: banner markdown
+sessions: banner
 cases-banner: B1, B2, B3, B4, B5
 plan-banner: bugfix-banner-plan.md
 cases-markdown: M1, M2, M3, M4, M5, M6
