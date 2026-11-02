@@ -26,7 +26,8 @@
 #                                 tablet in landscape (2400x1080 px at 216 dpi, 1777x800 dp); shots stay upright
 #   ui burst <name> <secs>        restart the app and take screenshots as fast as the emulator gives them for secs seconds,
 #                                 saved as UI_OUT/NN-<name>/<ms>.png (ms since the restart), with a contact sheet of
-#                                 them all as UI_OUT/NN-<name>.png and the text on screen at the end
+#                                 them all as UI_OUT/NN-<name>.png and the text on screen at the end; the first
+#                                 frames can still show the screen from before the restart
 #   ui do <command> [args] -- <command> [args] ...
 #                                 run the commands in order, stopping at the first that fails
 #   ui stop                       stop the app and logcat
@@ -258,7 +259,7 @@ key() {
 
 # A tablet keeps the phone's pixels at a lower density, so the screenshots, the tree and the taps share one size.
 display() {
-  local rotation deadline=$((SECONDS + 30))
+  local rotation kept=0 deadline=$((SECONDS + 60))
   case "$1" in
     phone)
       adb shell wm density reset
@@ -274,14 +275,20 @@ display() {
       ;;
   esac
   adb shell settings put system accelerometer_rotation 0
-  adb shell settings put system user_rotation "$rotation"
   echo "$1" > "$state/display"
-  until dump 2> /dev/null && grep -q "<hierarchy rotation=\"$rotation\"" "$state/ui.xml"; do
+  # the density change can turn the screen back a few seconds after the rotation, so it is set until it holds
+  until [ "$kept" -ge 2 ]; do
     if [ "$SECONDS" -ge "$deadline" ]; then
-      echo "error: the screen is not in the $1's orientation after 30 s"
+      echo "error: the screen does not stay in the $1's orientation within 60 s"
       return 1
     fi
-    sleep 1
+    adb shell settings put system user_rotation "$rotation"
+    sleep 2
+    if dump 2> /dev/null && grep -q "<hierarchy rotation=\"$rotation\"" "$state/ui.xml"; then
+      kept=$((kept + 1))
+    else
+      kept=0
+    fi
   done
 }
 
@@ -309,11 +316,16 @@ burst() {
   if ! wait "$launcher"; then
     echo "error: the app did not start"
   fi
+  # full-size frames together exceed ImageMagick's memory limits, so the sheet is made from thumbnails
+  rm -rf "$state/thumbs"
+  mkdir -p "$state/thumbs"
   for frame in "$sheet"/*.png; do
     upright "$frame"
+    convert "$frame" -thumbnail 200x "$state/thumbs/$(basename "$frame")"
   done
-  montage "$sheet"/*.png -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf -pointsize 20 -label '%t ms' \
-    -tile 8x -geometry 200x+4+4 "$sheet.png"
+  montage "$state/thumbs"/*.png -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf -pointsize 24 -label '%t ms' \
+    -tile 8x -geometry +4+4 "$sheet.png"
+  echo "frames in $(basename "$sheet")/, by ms since the restart: $(cd "$sheet" && ls | sed 's/\.png$//' | tr '\n' ' ')"
   dump
   cp "$state/ui.xml" "$sheet.xml"
   python3 "$here/screen-tree.py" "$sheet.xml" lines > "$sheet.txt"
