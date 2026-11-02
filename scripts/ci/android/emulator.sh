@@ -62,14 +62,14 @@ start() {
 # The test SMP server speaks TLS, which answers a plain-text request with an alert: any bytes back mean the request
 # reached it. The forward can take a while to answer after the boot.
 reverse() {
-  local port=$1 deadline=$((SECONDS + 60)) bytes
+  local port=$1 deadline=$((SECONDS + 120)) bytes
   if ! [[ "$port" =~ ^[0-9]+$ ]]; then
     echo "error: \"$port\" is not a port"
     return 1
   fi
-  adb reverse "tcp:$port" "tcp:$port"
-  adb reverse --list
   while :; do
+    adb reverse "tcp:$port" "tcp:$port"
+    adb reverse --list
     bytes=$(adb shell "printf 'GET / HTTP/1.0\r\n\r\n' | nc -w 5 127.0.0.1 $port | wc -c" || true)
     bytes=${bytes//[!0-9]/}
     echo "127.0.0.1:$port from the emulator: ${bytes:-no} bytes back"
