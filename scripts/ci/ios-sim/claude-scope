@@ -9,7 +9,7 @@ model: claude-sonnet-5-5
 sessions: markdown
 cases-banner: B1, B2, B3, B4, B5
 plan-banner: bugfix-banner-plan.md
-cases-markdown: M1, M2, M3, M4, M5, M6
+cases-markdown: M1, M2, M3, M4, M5, M6, M7
 plan-markdown: bugfix-markdown-plan.md
 max-turns: 200
 max-budget-usd: 15
