@@ -4,10 +4,11 @@
 # and passes when its final message ends with "CLAUDE-TEST: PASS".
 # Usage: scripts/ci/desktop-linux/claude-test.sh <output dir> <transcript .jsonl> [prompt .md]
 # Expects the app started (smoke-test.sh ... start) with UI_OUT under <output dir>, claude and ui on PATH,
-# CLAUDE_MODEL and CLAUDE_CODE_OAUTH_TOKEN. Claude works in <output dir>: the screenshots, its report.md and the
-# prompt it was given end up there. The transcript, Claude Code's stderr (<transcript>.stderr) and the guard hook's
-# log (<transcript>.guard.log) are kept outside it, where Claude can't write. If any of them holds the token, all are
-# deleted and the run fails.
+# CLAUDE_MODEL and CLAUDE_CODE_OAUTH_TOKEN. The model and the session's bounds come from claude-scope next to this
+# script, or from the file CLAUDE_SCOPE names; the model is CLAUDE_MODEL when the scope names none. Claude works in
+# <output dir>: the screenshots, its report.md and the prompt it was given end up there. The transcript, Claude Code's
+# stderr (<transcript>.stderr) and the guard hook's log (<transcript>.guard.log) are kept outside it, where Claude can't
+# write. If any of them holds the token, all are deleted and the run fails.
 
 set -euo pipefail
 
@@ -24,9 +25,10 @@ export CLAUDE_GUARD_LOG=$transcript.guard.log
 : > "$CLAUDE_GUARD_LOG"
 
 scope() {
-  sed -n "s/^$1: *//p" "$here/claude-scope"
+  sed -n "s/^$1: *//p" "${CLAUDE_SCOPE:-$here/claude-scope}"
 }
 
+model=$(scope model)
 max_turns=$(scope max-turns)
 max_budget=$(scope max-budget-usd)
 
@@ -46,7 +48,7 @@ claude --version
 cd "$out"
 status=0
 CLAUDE_CODE_OAUTH_TOKEN=$token claude -p \
-  --model "$CLAUDE_MODEL" \
+  --model "${model:-$CLAUDE_MODEL}" \
   --effort high \
   --restricted \
   --tools Bash,Read,Write,Edit \
