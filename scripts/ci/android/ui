@@ -259,7 +259,7 @@ key() {
 
 # A tablet keeps the phone's pixels at a lower density, so the screenshots, the tree and the taps share one size.
 display() {
-  local rotation deadline=$((SECONDS + 30))
+  local rotation kept=0 deadline=$((SECONDS + 60))
   case "$1" in
     phone)
       adb shell wm density reset
@@ -275,14 +275,20 @@ display() {
       ;;
   esac
   adb shell settings put system accelerometer_rotation 0
-  adb shell settings put system user_rotation "$rotation"
   echo "$1" > "$state/display"
-  until dump 2> /dev/null && grep -q "<hierarchy rotation=\"$rotation\"" "$state/ui.xml"; do
+  # the density change can turn the screen back a few seconds after the rotation, so it is set until it holds
+  until [ "$kept" -ge 2 ]; do
     if [ "$SECONDS" -ge "$deadline" ]; then
-      echo "error: the screen is not in the $1's orientation after 30 s"
+      echo "error: the screen does not stay in the $1's orientation within 60 s"
       return 1
     fi
-    sleep 1
+    adb shell settings put system user_rotation "$rotation"
+    sleep 2
+    if dump 2> /dev/null && grep -q "<hierarchy rotation=\"$rotation\"" "$state/ui.xml"; then
+      kept=$((kept + 1))
+    else
+      kept=0
+    fi
   done
 }
 
