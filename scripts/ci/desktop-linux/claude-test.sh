@@ -4,9 +4,9 @@
 # and passes when its final message ends with "CLAUDE-TEST: PASS".
 # Usage: scripts/ci/desktop-linux/claude-test.sh <output dir> <transcript .jsonl> [prompt .md]
 # Expects the app started (smoke-test.sh ... start) with UI_OUT under <output dir>, claude and ui on PATH,
-# CLAUDE_MODEL and CLAUDE_CODE_OAUTH_TOKEN. The session's model and bounds come from claude-scope next to this script,
-# or from the file CLAUDE_SCOPE names, with CLAUDE_MODEL when it names none. Claude works in <output dir>: the screenshots, its report.md and the
-# prompt it was given end up there. The transcript, Claude Code's stderr (<transcript>.stderr) and the guard hook's
+# CLAUDE_MODEL and CLAUDE_CODE_OAUTH_TOKEN. The model and the session's bounds come from claude-scope next to this
+# script, or from the file CLAUDE_SCOPE names; the model is CLAUDE_MODEL when the scope names none. Claude works in
+# <output dir>: the screenshots, its report.md and the prompt it was given end up there. The transcript, Claude Code's stderr (<transcript>.stderr) and the guard hook's
 # log (<transcript>.guard.log) are kept outside it, where Claude can't write. If any of them holds the token, all are
 # deleted and the run fails.
 
