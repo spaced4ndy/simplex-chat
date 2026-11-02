@@ -45,7 +45,7 @@ HELP = """peer <name> <command> [args]
                                          report a member's message starting with <message> to the group's admins;
                                          reason: spam, content, community, profile, other (10 s)
   image <chat> <test.jpg|logo.png>       send an image: a TV test card 1280x720, or the SimpleX logo on transparency (30 s)
-  file <chat> <test.pdf|test.txt|test.jpg|logo.png>  send a file (30 s)
+  file <chat> <test.pdf|test.txt|test.jpg|logo.png|README.md>  send a file; README.md is the repository's (30 s)
   text-file <chat> <file name> <line>... send a text file with these lines, e.g. notes.md (30 s)
   big-file <chat> <megabytes>            send a file of random bytes, 1 to 12 MB, e.g. to watch a transfer in progress
                                          or to offer more than the 8 MB the app accepts (30 s and 10 s per MB)
@@ -96,6 +96,7 @@ FIXTURES = {
     "logo.png": "tests/fixtures/logo-large-rgba.png",
     "test.pdf": "tests/fixtures/test.pdf",
     "test.txt": "tests/fixtures/test.txt",
+    "README.md": "README.md",
 }
 IMAGES = ["test.jpg", "logo.png"]
 CLI_COMMANDS = re.compile(
