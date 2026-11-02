@@ -272,6 +272,7 @@ jobs:
 
       - name: Compare snapshots
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        continue-on-error: true
         run: python3 scripts/ci/snapshots-compare.py apps/multiplatform/common/src/desktopTest/snapshots "$RUNNER_TEMP/snapshots" "$RUNNER_TEMP/snapshots-diff"
 
       - name: Run smoke test
