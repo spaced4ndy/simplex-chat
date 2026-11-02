@@ -49,6 +49,15 @@ start() {
     sleep 2
   done
   echo "package manager ready after $((SECONDS - started)) s"
+  # shared storage takes a while longer: files pushed to it before then are refused ("Operation not permitted")
+  until adb shell 'touch /sdcard/Pictures/.ci-probe && rm /sdcard/Pictures/.ci-probe' > /dev/null 2>&1; do
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      echo "error: shared storage is not writable $((SECONDS - started)) s after the start"
+      return 1
+    fi
+    sleep 2
+  done
+  echo "shared storage writable after $((SECONDS - started)) s"
 
   adb shell settings put global window_animation_scale 0
   adb shell settings put global transition_animation_scale 0
