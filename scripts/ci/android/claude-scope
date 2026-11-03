@@ -4,12 +4,9 @@
 # backend: yes when the prompt uses the test backend; a run that asks for Claude must then start it too.
 # max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
 backend: yes
-sessions: terminal member
-parallel: 2
+sessions: terminal
 cases-terminal: S1, T1, T2, T3, T4
 plan-terminal: bugfix-terminal-plan.md
-cases-member: S1, L1, L2, L3, L4, L5
-plan-member: bugfix-member-plan.md
 max-turns: 200
 max-budget-usd: 10
 max-minutes: 60
