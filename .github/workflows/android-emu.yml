@@ -373,6 +373,9 @@ jobs:
           name: android-app
           path: ${{ runner.temp }}/apk
 
+      - name: Use the 7.0.4 release instead
+        run: curl -fsSL -o "$RUNNER_TEMP/apk/$APK" https://github.com/simplex-chat/simplex-chat/releases/download/v7.0.4/simplex-aarch64.apk
+
       - name: Download backend
         if: needs.plan.outputs.claude-backend == 'yes'
         uses: actions/download-artifact@v8
