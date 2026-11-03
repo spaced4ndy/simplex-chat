@@ -1,0 +1,14 @@
+# Plan: images in the terminal chat layout
+
+The app draws chats in one of two layouts, chosen in Settings → "Appearance" → "Chat layout": "Classic" (messages in bubbles, the default) or "Terminal" (messages as rows of text without bubbles, the sender's name above them). A peer, alice, sends texts and images.
+
+These cases record where images end on the right compared with the screen's edge and with the text, for a reviewer who measures the screenshots of runs before and after a change. Take every shot the plan names, with the image fully on screen (scroll the chat if it is cut off) and nothing over it, and describe what shows.
+
+| ID | Do | Expect |
+|---|---|---|
+| T1 | `peer alice link`, then `ui open-link '<the link it printed>'`. In the app, confirm connecting ("Connect", or "Open new chat" and then the chat's connect button). `peer alice wait 30`. `peer alice chats` shows the app's profile name as alice sees it: use it as `@<name>` in the commands below (quoted, as in `'@citester'`). `ui shot T1-connected`. | The app shows the chat with alice, connected. |
+| T2 | `peer alice send '@<name>' 'This first message is long enough to wrap across the whole width of the screen, so that its lines show where text ends on the right.'`, then `peer alice image '@<name>' test.jpg`, then `peer alice send '@<name>' 'This last message is also long enough to wrap across the whole width of the screen, below the image.'`. In the app, alice's chat shows both texts and the test card image (colour bars and a circle); wait until the image itself shows, not a placeholder. Scroll so that the image and both texts are on screen: `ui shot T2-classic`. | The classic layout shows the image and the texts in bubbles. |
+| T3 | Go back to the chat list (`ui key BACK`), open Settings (from the profile picture in the chat list's toolbar), then "Appearance". Find the row "Chat layout" (scroll down if needed), tap it and choose "Terminal": `ui shot T3-setting`. Go back to alice's chat. Scroll so that the image and both texts are fully on screen: `ui shot T3-terminal`. | The chat shows rows without bubbles. Describe where the image's right edge is compared with the screen's right edge and with the right ends of the text lines, and where the time shows on the image. |
+| T4 | `peer alice image '@<name>' logo.png`, then `peer alice send '@<name>' 'And one more long message after the logo, which wraps across the whole width of the screen too.'`. In alice's chat, still in the terminal layout, scroll so that the logo image and the text after it are fully on screen: `ui shot T4-terminal-logo`. | Describe where the logo image's right edge is compared with the screen's right edge and with the text's. |
+
+Record a case ok when its shots are taken and its description is in the record, and bug when an image reaches the screen's right edge while the text keeps a margin there; the reviewer measures the screenshots in either case.
