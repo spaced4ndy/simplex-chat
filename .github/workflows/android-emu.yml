@@ -344,7 +344,7 @@ jobs:
     needs: [plan, app]
     if: ${{ !cancelled() && needs.plan.outputs.run-claude == 'true' && needs.app.result == 'success' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     environment:
       name: app-sim-claude
       deployment: false
@@ -424,7 +424,10 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: 1
-        run: scripts/ci/desktop-linux/claude-test.sh "$RUNNER_TEMP/claude-test" "$RUNNER_TEMP/claude-transcript.jsonl" scripts/ci/android/claude-test.md
+          CLAUDE_SCOPE: scripts/ci/android/claude-scope
+        run: |
+          prompt=$(sed -n 's/^prompt: *//p' "$CLAUDE_SCOPE")
+          scripts/ci/desktop-linux/claude-test.sh "$RUNNER_TEMP/claude-test" "$RUNNER_TEMP/claude-transcript.jsonl" "scripts/ci/android/${prompt:-claude-test.md}"
 
       - name: Report Claude usage
         if: ${{ !cancelled() && steps.claude.outcome != 'skipped' }}

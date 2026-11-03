@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Boots the AVD "ci" (install-sdk.sh) without a window, with KVM, and waits until Android has booted and its
-# package manager answers; then turns animations off and keeps the screen on and unlocked.
+# Boots the AVD "ci" (install-sdk.sh) without a window, with KVM, and waits until Android has booted, its package
+# manager answers and shared storage is writable; then turns animations off and keeps the screen on and unlocked.
 # Usage: scripts/ci/android/emulator.sh start <log dir>
 #        scripts/ci/android/emulator.sh reverse <port>   forwards the emulator's 127.0.0.1:<port> to the runner's,
 #                                                        and waits until the server there answers
@@ -49,6 +49,15 @@ start() {
     sleep 2
   done
   echo "package manager ready after $((SECONDS - started)) s"
+  # shared storage takes a while longer: files pushed to it before then are refused ("Operation not permitted")
+  until adb shell 'touch /sdcard/Pictures/.ci-probe && rm /sdcard/Pictures/.ci-probe' > /dev/null 2>&1; do
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      echo "error: shared storage is not writable $((SECONDS - started)) s after the start"
+      return 1
+    fi
+    sleep 2
+  done
+  echo "shared storage writable after $((SECONDS - started)) s"
 
   adb shell settings put global window_animation_scale 0
   adb shell settings put global transition_animation_scale 0
