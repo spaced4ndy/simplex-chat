@@ -34,7 +34,7 @@ env:
   JAVA_VER: 17
   CORE_PKG: android-core-arm64-v8a.tar.gz
   BACKEND_PKG: desktop-linux-backend.tar.gz
-  APK: android-foss-arm64-v8a-debug.apk
+  APK: android-google-arm64-v8a-debug.apk
 
 jobs:
   plan:
@@ -273,9 +273,9 @@ jobs:
         if: ${{ !cancelled() && steps.core.outcome == 'success' }}
         working-directory: apps/multiplatform
         run: |
-          ./gradlew --no-daemon --console=plain -Psimplex.assets.dir=../../assets -Pandroid.injected.build.abi=arm64-v8a :android:assembleFossDebug
+          ./gradlew --no-daemon --console=plain -Psimplex.assets.dir=../../assets -Pandroid.injected.build.abi=arm64-v8a :android:assembleGoogleDebug
           mkdir -p "$RUNNER_TEMP/apk"
-          cp "android/build/intermediates/apk/foss/debug/$APK" "$RUNNER_TEMP/apk"
+          cp "android/build/intermediates/apk/google/debug/$APK" "$RUNNER_TEMP/apk"
           ls -la "$RUNNER_TEMP/apk"
           unzip -l "$RUNNER_TEMP/apk/$APK" | grep -E ' lib/'
 
