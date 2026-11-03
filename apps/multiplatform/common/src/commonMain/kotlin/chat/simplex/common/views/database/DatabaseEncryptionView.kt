@@ -316,9 +316,11 @@ fun storeSecurelySaved() = generalGetString(MR.strings.store_passphrase_securely
 fun storeSecurelyDanger() = generalGetString(MR.strings.store_passphrase_securely_without_recover)
 
 private fun operationEnded(m: ChatModel, progressIndicator: MutableState<Boolean>, alert: () -> Unit) {
+  Log.e("PASSDIAG", "operationEnded on ${Thread.currentThread().name}")
   m.chatDbChanged.value = true
   progressIndicator.value = false
   alert.invoke()
+  Log.e("PASSDIAG", "operationEnded alert shown")
 }
 
 @Composable
@@ -441,15 +443,20 @@ suspend fun encryptDatabase(
   migration: Boolean,
 ): Boolean {
   val m = ChatModel
+  Log.e("PASSDIAG", "encryptDatabase begins on ${Thread.currentThread().name}, random=${initialRandomDBPassphrase.value}, keychain=${useKeychain.value}, chatDbChanged=${m.chatDbChanged.value}, chatRunning=${m.chatRunning.value}")
   progressIndicator.value = true
   return try {
     appPrefs.encryptionStartedAt.set(Clock.System.now())
     if (!m.chatDbChanged.value) {
       m.controller.apiSaveAppSettings(AppSettings.current.prepareForExport())
+      Log.e("PASSDIAG", "encryptDatabase apiSaveAppSettings returned")
     }
+    Log.e("PASSDIAG", "encryptDatabase calling apiStorageEncryption")
     val error = m.controller.apiStorageEncryption(currentKey.value, newKey.value)
+    Log.e("PASSDIAG", "encryptDatabase apiStorageEncryption returned, error=$error")
     if (error == null && currentKey.value != newKey.value) appPrefs.shouldDeleteDatabaseBackups.set(true)
     appPrefs.encryptionStartedAt.set(null)
+    Log.e("PASSDIAG", "encryptDatabase preferences set")
     val sqliteError = ((error as? ChatError.ChatErrorDatabase)?.databaseError as? DatabaseError.ErrorExport)?.sqliteError
     when {
       sqliteError is SQLiteError.ErrorNotADatabase -> {
@@ -474,13 +481,16 @@ suspend fun encryptDatabase(
         if (migration) {
           appPreferences.storeDBPassphrase.set(useKeychain.value)
         }
+        Log.e("PASSDIAG", "encryptDatabase saving the key, keychain=${useKeychain.value}")
         if (useKeychain.value) {
           DatabaseUtils.ksDatabasePassword.set(new)
         } else {
           removePassphraseFromKeyChain(useKeychain, storedKey, migration)
         }
+        Log.e("PASSDIAG", "encryptDatabase key saved")
         // DatabaseEncryptionView reads key storage when storedKey changes, so storedKey is updated after the key is saved
         resetFormAfterEncryption(m, initialRandomDBPassphrase, currentKey, newKey, confirmNewKey, storedKey, useKeychain.value)
+        Log.e("PASSDIAG", "encryptDatabase form reset")
         operationEnded(m, progressIndicator) {
           AlertManager.shared.showAlertMsg(generalGetString(MR.strings.database_encrypted))
         }
@@ -488,10 +498,13 @@ suspend fun encryptDatabase(
       }
     }
   } catch (e: Exception) {
+    Log.e("PASSDIAG", "encryptDatabase caught ${e.stackTraceToString()}")
     operationEnded(m, progressIndicator) {
       AlertManager.shared.showAlertMsg(generalGetString(MR.strings.error_encrypting_database), e.stackTraceToString())
     }
     false
+  } finally {
+    Log.e("PASSDIAG", "encryptDatabase finally, progress=${progressIndicator.value}")
   }
 }
 

@@ -408,11 +408,14 @@ fun startChat(
   progressIndicator: MutableState<Boolean>? = null
 ) {
   Log.d(TAG, "startChat")
+  Log.e("PASSDIAG", "startChat called on ${Thread.currentThread().name}, chatDbChanged=${chatDbChanged.value}")
   withLongRunningApi {
     try {
+      Log.e("PASSDIAG", "startChat job begins on ${Thread.currentThread().name}")
       progressIndicator?.value = true
       if (chatDbChanged.value) {
         initChatController()
+        Log.e("PASSDIAG", "startChat initChatController returned, dbStatus=${m.chatDbStatus.value}")
         chatDbChanged.value = false
       }
       if (m.chatDbStatus.value !is DBMigrationResult.OK) {
@@ -426,16 +429,19 @@ fun startChat(
         return@withLongRunningApi
       } else {
         m.controller.startChat(user)
+        Log.e("PASSDIAG", "startChat controller.startChat returned")
       }
       val ts = Clock.System.now()
       m.controller.appPrefs.chatLastStart.set(ts)
       chatLastStart.value = ts
       platform.androidChatStartedAfterBeingOff()
     } catch (e: Throwable) {
+      Log.e("PASSDIAG", "startChat threw ${e.stackTraceToString()}")
       m.chatRunning.value = false
       AlertManager.shared.showAlertMsg(generalGetString(MR.strings.error_starting_chat), e.toString())
     } finally {
       progressIndicator?.value = false
+      Log.e("PASSDIAG", "startChat finally, progress=false")
     }
   }
 }
@@ -488,20 +494,26 @@ fun authStopChat(m: ChatModel, progressIndicator: MutableState<Boolean>? = null,
 private fun stopChat(m: ChatModel, progressIndicator: MutableState<Boolean>? = null, onStop: (() -> Unit)? = null) {
   withBGApi {
     try {
+      Log.e("PASSDIAG", "stopChat job begins on ${Thread.currentThread().name}")
       progressIndicator?.value = true
       stopChatAsync(m)
+      Log.e("PASSDIAG", "stopChat stopChatAsync returned")
       platform.androidChatStopped()
       // close chat view for desktop
       chatModel.chatId.value = null
       if (appPlatform.isDesktop) {
         ModalManager.end.closeModals()
       }
+      Log.e("PASSDIAG", "stopChat invoking onStop")
       onStop?.invoke()
+      Log.e("PASSDIAG", "stopChat onStop returned")
     } catch (e: Error) {
+      Log.e("PASSDIAG", "stopChat Error ${e.stackTraceToString()}")
       m.chatRunning.value = true
       AlertManager.shared.showAlertMsg(generalGetString(MR.strings.error_stopping_chat), e.toString())
     } finally {
       progressIndicator?.value = false
+      Log.e("PASSDIAG", "stopChat finally, progress=false")
     }
   }
 }
@@ -529,15 +541,20 @@ fun stopChatRunBlockStartChat(
       }
     }
   } else {
+    Log.e("PASSDIAG", "stopChatRunBlockStartChat: stop, run, start; chatRunning=${chatModel.chatRunning.value}")
     authStopChat(chatModel, progressIndicator) {
+      Log.e("PASSDIAG", "onStop: launching the block")
       withLongRunningApi {
+        Log.e("PASSDIAG", "block job begins on ${Thread.currentThread().name}")
         // if it throws, let's start chat again anyway
         val canStart = try {
           block()
         } catch (e: Throwable) {
+          Log.e("PASSDIAG", "block threw ${e.stackTraceToString()}")
           Log.e(TAG, e.stackTraceToString())
           true
         }
+        Log.e("PASSDIAG", "block returned canStart=$canStart")
         if (canStart) {
           startChat(chatModel, chatLastStart, chatModel.chatDbChanged, progressIndicator)
         }
