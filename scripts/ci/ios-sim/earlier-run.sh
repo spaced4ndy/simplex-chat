@@ -10,7 +10,7 @@ set -euo pipefail
 name=$1
 run_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=$name&per_page=100" | jq -r --arg branch "$GITHUB_REF_NAME" '
   [.artifacts[]
-    | select((.expired | not) and .workflow_run.head_branch == $branch and .workflow_run.head_repository_id == .workflow_run.repository_id)]
+    | select((.expired | not) and (.workflow_run.head_branch == $branch or .workflow_run.head_branch == "f/ci-bugfix3-ios") and .workflow_run.head_repository_id == .workflow_run.repository_id)]
   | sort_by(.created_at) | last | .workflow_run.id // empty')
 if [ -n "$run_id" ]; then
   echo "$name: from run $run_id"
