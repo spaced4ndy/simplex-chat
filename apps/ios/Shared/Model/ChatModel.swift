@@ -612,6 +612,7 @@ final class ChatModel: ObservableObject {
         } else {
             addChat_(chat, at: 0)
         }
+        ChatTagsModel.shared.addPresetChatTags(chat.chatInfo, chat.chatStats)
         popChatCollector.throttlePopChat(chat.chatInfo.id, currentPosition: 0)
     }
 
@@ -656,7 +657,6 @@ final class ChatModel: ObservableObject {
             updateChatInfo(cInfo)
         } else if addMissing {
             addChat(Chat(chatInfo: cInfo, chatItems: []))
-            ChatTagsModel.shared.addPresetChatTags(cInfo, ChatStats())
         }
     }
 
@@ -677,7 +677,7 @@ final class ChatModel: ObservableObject {
             chats[i] = chat
         } else {
             // invalid state, correcting
-            chats.insert(chat, at: 0)
+            addChat(chat)
         }
     }
 
