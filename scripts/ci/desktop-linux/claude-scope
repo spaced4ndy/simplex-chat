@@ -3,7 +3,10 @@
 # jobs run at once, 1 unless set; cases-<session> and plan-<session> (optional): its cases and its plan file here.
 # backend: yes when the prompt uses the test backend; a run that asks for Claude must then start it too.
 # max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
-backend: no
-max-turns: 330
-max-budget-usd: 5
-max-minutes: 100
+backend: yes
+sessions: kotlin
+cases-kotlin: S1, A1, A2, Q1, Q2, Q3
+plan-kotlin: bugfix3-plan.md
+max-turns: 200
+max-budget-usd: 10
+max-minutes: 60

@@ -352,7 +352,7 @@ jobs:
     env:
       # the same in both app workflows
       CLAUDE_CODE_VERSION: 2.1.300
-      CLAUDE_MODEL: claude-haiku-5-5
+      CLAUDE_MODEL: claude-sonnet-5-5
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
