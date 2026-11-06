@@ -214,6 +214,37 @@ jobs:
       - name: Run smoke test
         run: scripts/ci/ios-sim/smoke-test.sh "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator/SimpleX.app" "$RUNNER_TEMP/smoke-test"
 
+      - name: Build the app from master's sources
+        run: |
+          git fetch -q --depth=1 origin 911f8986e5bdcf71f6a74867518b1083e03d5755
+          git diff --name-only -z FETCH_HEAD HEAD -- 'apps/ios/*.swift' | xargs -0 git checkout FETCH_HEAD --
+          git status --short
+          xcodebuild build -quiet \
+            -project apps/ios/SimpleX.xcodeproj \
+            -scheme "SimpleX (iOS)" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            ARCHS=arm64 \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY=- \
+            DEVELOPMENT_TEAM= \
+            PROVISIONING_PROFILE_SPECIFIER=
+          mkdir -p "$RUNNER_TEMP/master"
+          tar -czf "$RUNNER_TEMP/master/SimpleX.app.tar.gz" -C "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator" SimpleX.app
+
+      - name: Upload master's app
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-sim-app-master
+          path: ${{ runner.temp }}/master/SimpleX.app.tar.gz
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+
       - name: Stop test backend
         if: ${{ !cancelled() && env.START_BACKEND == 'true' }}
         run: scripts/ci/ios-sim/backend.sh stop "$RUNNER_TEMP/backend"
@@ -278,7 +309,7 @@ jobs:
       - name: Download app
         uses: actions/download-artifact@v8
         with:
-          name: ios-sim-app
+          name: ${{ matrix.session == 'before' && 'ios-sim-app-master' || 'ios-sim-app' }}
           path: ${{ runner.temp }}
 
       - name: Unpack app
