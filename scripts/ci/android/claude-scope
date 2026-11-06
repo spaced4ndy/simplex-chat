@@ -5,7 +5,7 @@
 # max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
 backend: no
 sessions: bugfix
-cases-bugfix: S1, C1, C2, C3, T1, T2, H1, H2, H3, H4, Q1, Q2, L1, L2, L3, L4
+cases-bugfix: S1, C1, C2, C3, C4, T1, T2, H1, H2, H3, H4, Q1, Q2, L1, L2
 plan-bugfix: bugfix3-plan.md
 max-turns: 200
 max-budget-usd: 10
