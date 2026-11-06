@@ -4,10 +4,12 @@
 # device-test-plan.md unless set; entries-<session> (optional): the directory entries and names its cases use.
 # backend: yes when the cases use the test backend; a run that asks for Claude must then start it too.
 # max-turns, max-budget-usd and max-minutes bound each session.
-backend: no
-model: claude-haiku-5-5
-sessions: main
-cases-main: S2, S3, A1, A2, A3, A4, A5, J1, J2, A6, B1, B2, B3, J3, J4, J5, B4, B5, B6, B7, I1-I4
-max-turns: 390
-max-budget-usd: 5
-max-minutes: 240
+backend: yes
+model: claude-sonnet-5-5
+sessions: core
+cases-core: F1, F2, F3, F4, F5, F6, D1, D2, D3, D4, D5, D6, D7, D8
+layout-core: reachable
+plan-core: bugfix3-core-plan.md
+max-turns: 400
+max-budget-usd: 15
+max-minutes: 120

@@ -29,6 +29,7 @@
 #   ui do <command> [args] -- <command> [args] ...
 #                                 run the commands in order, stopping at the first that fails
 #   ui relaunch                   quit the app and start it again with its data, as a user restarting it would
+#   ui window <width> <height>    resize the app's window, at most the 1440x900 screen
 #   ui stop                       stop the app, openbox and Xvfb
 #
 # Text is compared ignoring case, spaces and punctuation, with a capital I and a lowercase l alike; a phrase that is
@@ -329,6 +330,14 @@ case "${1:-}" in
     stop_process app 10
     launch_app
     log "relaunch"
+    ;;
+  window)
+    number "$2"
+    number "$3"
+    xdotool windowsize --sync "$(head -n 1 "$state/window")" "$2" "$3"
+    sleep 1
+    xdotool getwindowgeometry "$(head -n 1 "$state/window")"
+    log "window $2 $3"
     ;;
   stop)
     stop_process app 10

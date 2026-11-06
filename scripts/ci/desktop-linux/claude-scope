@@ -3,7 +3,10 @@
 # jobs run at once, 1 unless set; cases-<session> and plan-<session> (optional): its cases and its plan file here.
 # backend: yes when the prompt uses the test backend; a run that asks for Claude must then start it too.
 # max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
-backend: no
-max-turns: 330
-max-budget-usd: 5
-max-minutes: 100
+backend: yes
+sessions: core
+cases-core: S1, F1, F2, F3, F4, F5, F6, D1, D2, D3, D4, D5, D6, D7, D8, U1, U2, U3, U4, U5
+plan-core: bugfix3-core-plan.md
+max-turns: 400
+max-budget-usd: 15
+max-minutes: 120
