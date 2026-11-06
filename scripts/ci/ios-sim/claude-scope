@@ -7,7 +7,7 @@
 backend: yes
 model: claude-sonnet-5-5
 sessions: bugs
-cases-bugs: P1, P2, P3, P4, A1, A2, C1, C2, C3, Q1, Q2, Q3, L1, L2, M1, M2, M3, M4, C4
+cases-bugs: P1, P2, P3, P4, A1, A2, C1, C2, C5, C3, Q1, Q2, Q3, L1, L2, M1, M2, M3, M4, C4
 plan-bugs: bugfix3-plan.md
 max-turns: 450
 max-budget-usd: 20
