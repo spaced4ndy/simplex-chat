@@ -5,7 +5,7 @@
 # max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
 backend: yes
 sessions: kotlin
-cases-kotlin: S1, A1, A2, Q1, Q2, Q3
+cases-kotlin: S1, A1, A2, A3, Q1, Q2, Q3
 plan-kotlin: bugfix3-plan.md
 max-turns: 200
 max-budget-usd: 10
