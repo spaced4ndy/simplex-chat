@@ -20,7 +20,7 @@ start() {
   ls -l /dev/kvm
   emulator -accel-check
 
-  local flags=(-avd ci -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -gpu swiftshader_indirect -camera-back none -camera-front none -memory 4096 -cores 4)
+  local flags=(-avd ci -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -gpu swiftshader_indirect -camera-back emulated -camera-front none -memory 4096 -cores 4)
   echo "emulator ${flags[*]}"
   started=$SECONDS
   nohup emulator "${flags[@]}" < /dev/null > "$log" 2>&1 &
