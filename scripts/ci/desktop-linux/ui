@@ -93,7 +93,7 @@ start() {
   fi
   XDG_DATA_HOME="$state/data" \
     XDG_CONFIG_HOME="$state/config" \
-    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=$state/tmp -Dskiko.renderApi=SOFTWARE" \
+    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=$state/tmp -Dskiko.renderApi=SOFTWARE ${UI_JAVA_OPTIONS:-}" \
     LD_LIBRARY_PATH="$app_dir/lib/app/resources" \
     setsid "$app_dir/bin/simplex" < /dev/null >> "$UI_OUT/app.log" 2>&1 &
   echo $! > "$state/app.pid"
