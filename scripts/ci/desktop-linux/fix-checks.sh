@@ -194,17 +194,32 @@ lock_notice_at_start() {
   return 1
 }
 
+new_app_state() {
+  "$ui" stop
+  rm -rf "$UI_STATE"
+  mkdir -p "$UI_STATE/config/simplex"
+  printf '%s\n' NetworkSMPProxyMode=Unknown DeveloperTools=true LogLevel=DEBUG AppUpdateNoticeShown=true > "$UI_STATE/config/simplex/settings.properties"
+}
+
 export UI_OUT=$out
 "$ui" stop
 export UI_STATE=${RUNNER_TEMP:-/tmp}/ui-fix-checks
-mkdir -p "$UI_STATE/config/simplex"
-printf '%s\n' NetworkSMPProxyMode=Unknown DeveloperTools=true LogLevel=DEBUG AppUpdateNoticeShown=true > "$UI_STATE/config/simplex/settings.properties"
+new_app_state
 if [ -n "${JACOCO:-}" ]; then
   export UI_JAVA_OPTIONS="-javaagent:$JACOCO/jacocoagent.jar=output=tcpserver,address=127.0.0.1,port=6300,includes=chat.simplex.*"
 fi
 if ! "$here/smoke-test.sh" "$app_dir" "$out" onboarding; then
-  result FAIL "onboarding before the checks"
-  exit 0
+  if [ -z "${UI_JAVA_OPTIONS:-}" ]; then
+    result FAIL "onboarding before the checks"
+    exit 0
+  fi
+  result NOTE "the app didn't start with the coverage agent; the checks run without coverage"
+  unset UI_JAVA_OPTIONS JACOCO
+  new_app_state
+  if ! "$here/smoke-test.sh" "$app_dir" "$out" onboarding; then
+    result FAIL "onboarding before the checks"
+    exit 0
+  fi
 fi
 toolbar_offset=$(($(window_bottom) - 730))
 

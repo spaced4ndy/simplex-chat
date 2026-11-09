@@ -64,9 +64,31 @@ stop_process() {
   rm -f "$state/$name.pid"
 }
 
+# The app's bundled runtime has no java.instrument, which a Java agent needs: with UI_JAVA_OPTIONS the app runs on the
+# JDK in JAVA_HOME, with the class path, main class and options of its launcher's configuration, one argument per line.
+jvm_command() {
+  local root=$1 cfg=$1/lib/app/simplex.cfg
+  [ -f "$cfg" ] && [ -x "${JAVA_HOME:-}/bin/java" ] || return 1
+  expand() { sed -e "s|\$APPDIR|$root/lib/app|g" -e "s|\$ROOTDIR|$root|g" -e "s|\$BINDIR|$root/bin|g"; }
+  echo "$JAVA_HOME/bin/java"
+  sed -n 's/^java-options=//p' "$cfg" | expand
+  echo -cp
+  sed -n 's/^app\.classpath=//p' "$cfg" | expand | paste -sd:
+  sed -n 's/^app\.mainclass=//p' "$cfg"
+}
+
 start() {
-  local app_dir settings=$state/config/simplex/settings.properties
+  local app_dir settings=$state/config/simplex/settings.properties launcher
   app_dir=$(cd "$1" && pwd)
+  launcher=("$app_dir/bin/simplex")
+  if [ -n "${UI_JAVA_OPTIONS:-}" ]; then
+    mapfile -t launcher < <(jvm_command "$app_dir") || true
+    if [ ${#launcher[@]} -lt 4 ]; then
+      echo "error: no launcher configuration or JDK to run the app with UI_JAVA_OPTIONS"
+      return 1
+    fi
+    printf '%s\n' "${launcher[@]}" > "$UI_OUT/jvm-command.txt"
+  fi
   shift
   if running app; then
     echo "error: the app is already running"
@@ -95,7 +117,7 @@ start() {
     XDG_CONFIG_HOME="$state/config" \
     JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=$state/tmp -Dskiko.renderApi=SOFTWARE ${UI_JAVA_OPTIONS:-}" \
     LD_LIBRARY_PATH="$app_dir/lib/app/resources" \
-    setsid "$app_dir/bin/simplex" < /dev/null >> "$UI_OUT/app.log" 2>&1 &
+    setsid "${launcher[@]}" < /dev/null >> "$UI_OUT/app.log" 2>&1 &
   echo $! > "$state/app.pid"
 
   if ! timeout 120 xdotool search --sync --onlyvisible --name '^SimpleX$' > "$state/window"; then
