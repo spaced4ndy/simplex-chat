@@ -157,11 +157,46 @@ lock_notice_at_start() {
   return 1
 }
 
+# Onboarding as smoke-test.sh does it, after the app's data was cleared: the notifications alert then has only "OK", as
+# the battery setting from the first install remains.
+onboarding() {
+  local deadline
+  "$ui" start "$apk" NetworkSMPProxyMode=Unknown DeveloperTools=true LogLevel=DEBUG || return 1
+  deadline=$((SECONDS + 180))
+  until "$ui" find "Get started" > /dev/null 2>&1; do
+    if "$ui" find "New in" > /dev/null 2>&1; then
+      "$ui" click-text OK 5
+    fi
+    [ "$SECONDS" -lt "$deadline" ] || return 1
+    sleep 1
+  done
+  "$ui" click-text "Get started" || return 1
+  "$ui" click-text "Enter profile name" 30 || return 1
+  "$ui" type citester || return 1
+  "$ui" click-text "Create profile" || return 1
+  "$ui" click-text "Continue" 60 || return 1
+  deadline=$((SECONDS + 120))
+  until "$ui" find "Talk to someone" > /dev/null 2>&1; do
+    if "$ui" find "Allow" > /dev/null 2>&1; then
+      "$ui" click-text "Allow" 5
+    elif "$ui" find "Instant notifications" > /dev/null 2>&1; then
+      "$ui" click-text OK 5
+    elif "$ui" find "Accept" > /dev/null 2>&1; then
+      "$ui" click-text "Accept" 5
+    fi
+    [ "$SECONDS" -lt "$deadline" ] || return 1
+    sleep 1
+  done
+  "$ui" shot chat-list
+}
+
 export UI_OUT=$out
 "$ui" stop
 adb shell pm clear "$package"
 export UI_STATE=${RUNNER_TEMP:-/tmp}/ui-fix-checks
-if ! "$here/smoke-test.sh" "$apk" "$out" onboarding; then
+mkdir -p "$UI_STATE"
+if ! onboarding; then
+  "$ui" shot onboarding-failed
   result FAIL "onboarding before the checks"
   exit 0
 fi
