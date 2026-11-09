@@ -248,7 +248,7 @@ fun ChatPreviewView(
       )
     } else if (ci?.content?.hasMsgContent != true && previewText != null) {
       Text(previewText.first, color = previewText.second)
-    } else if (ci != null && showChatPreviews) {
+    } else if (ci != null && showChatPreviews && cInfo !is ChatInfo.Local) {
       val (text: CharSequence, inlineTextContent) = when {
         ci.meta.itemDeleted != null -> markedDeletedText(ci, chat.chatInfo) to null
         ci.content.msgContent is MsgContent.MCChat -> {
