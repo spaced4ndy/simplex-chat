@@ -214,33 +214,80 @@ jobs:
       - name: Run smoke test
         run: scripts/ci/ios-sim/smoke-test.sh "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator/SimpleX.app" "$RUNNER_TEMP/smoke-test"
 
-      - name: Build the app from master's sources
+      - name: Build each fix's app from its head
         run: |
-          git fetch -q --depth=1 origin 911f8986e5bdcf71f6a74867518b1083e03d5755
-          git diff --name-only -z FETCH_HEAD HEAD -- 'apps/ios/*.swift' | xargs -0 git checkout FETCH_HEAD --
-          git status --short
-          xcodebuild build -quiet \
-            -project apps/ios/SimpleX.xcodeproj \
-            -scheme "SimpleX (iOS)" \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
-            -onlyUsePackageVersionsFromResolvedFile \
-            -skipPackagePluginValidation \
-            -skipMacroValidation \
-            ARCHS=arm64 \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY=- \
-            DEVELOPMENT_TEAM= \
-            PROVISIONING_PROFILE_SPECIFIER=
-          mkdir -p "$RUNNER_TEMP/master"
-          tar -czf "$RUNNER_TEMP/master/SimpleX.app.tar.gz" -C "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator" SimpleX.app
+          for fix in \
+            prefs:058b9f6b37c096053cc9d43d18d8ae0b56bab090 \
+            banner:140c6d7c0bcca4cbdcc908bed0f9cd02936458bc \
+            live:89fea020b7a56ac635783b5d54a0fae0b5e53d8d \
+            shield:9a2075693ab15c0b0f715a09de88aa9ee78fe8ad; do
+            name=${fix%%:*}
+            sha=${fix#*:}
+            git fetch -q --depth=1 origin "$sha"
+            other=$(git diff --name-only HEAD FETCH_HEAD -- apps/ios ':(exclude)*.swift')
+            if [ -n "$other" ]; then
+              echo "::error::$name changes iOS files other than Swift sources: $other"
+              exit 1
+            fi
+            files=$(git diff --name-only HEAD FETCH_HEAD -- 'apps/ios/*.swift')
+            if [ -z "$files" ]; then
+              echo "::error::$name changes no Swift source against this branch"
+              exit 1
+            fi
+            echo "$name at $(git rev-parse FETCH_HEAD): $files"
+            git diff HEAD FETCH_HEAD -- apps/ios
+            git checkout FETCH_HEAD -- $files
+            xcodebuild build -quiet \
+              -project apps/ios/SimpleX.xcodeproj \
+              -scheme "SimpleX (iOS)" \
+              -configuration Debug \
+              -destination 'generic/platform=iOS Simulator' \
+              -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+              -onlyUsePackageVersionsFromResolvedFile \
+              -skipPackagePluginValidation \
+              -skipMacroValidation \
+              ARCHS=arm64 \
+              CODE_SIGN_STYLE=Manual \
+              CODE_SIGN_IDENTITY=- \
+              DEVELOPMENT_TEAM= \
+              PROVISIONING_PROFILE_SPECIFIER=
+            mkdir -p "$RUNNER_TEMP/$name"
+            tar -czf "$RUNNER_TEMP/$name/SimpleX.app.tar.gz" -C "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator" SimpleX.app
+            git checkout HEAD -- $files
+          done
 
-      - name: Upload master's app
+      - name: Upload the contact preferences fix's app
         uses: actions/upload-artifact@v7
         with:
-          name: ios-sim-app-master
-          path: ${{ runner.temp }}/master/SimpleX.app.tar.gz
+          name: ios-sim-app-prefs
+          path: ${{ runner.temp }}/prefs/SimpleX.app.tar.gz
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload the chat banner fix's app
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-sim-app-banner
+          path: ${{ runner.temp }}/banner/SimpleX.app.tar.gz
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload the live message fix's app
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-sim-app-live
+          path: ${{ runner.temp }}/live/SimpleX.app.tar.gz
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload the channel member shield fix's app
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-sim-app-shield
+          path: ${{ runner.temp }}/shield/SimpleX.app.tar.gz
           compression-level: 0
           retention-days: 14
           if-no-files-found: error
@@ -309,7 +356,7 @@ jobs:
       - name: Download app
         uses: actions/download-artifact@v8
         with:
-          name: ${{ matrix.session == 'before' && 'ios-sim-app-master' || 'ios-sim-app' }}
+          name: ${{ startsWith(matrix.session, 'before') && 'ios-sim-app' || format('ios-sim-app-{0}', matrix.session) }}
           path: ${{ runner.temp }}
 
       - name: Unpack app
