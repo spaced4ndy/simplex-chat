@@ -57,6 +57,8 @@ The contact palb is used only in these cases.
 |---|---|---|
 | L1 | Open the chat with pala. Start a live message, `ui type "live hello world"`, wait 5 s with `peer pala wait 5`: `ui shot L1-live`, `ui find LIVE`. | The message shows in the chat with the header "LIVE". |
 | L2 | Tap the check mark: `ui shot L2-finished`, `ui find LIVE`. Wait 10 s with `peer pala wait 10`: `ui shot L2-finished-later`, `ui find LIVE`. Go back to the chat list, open the chat again: `ui shot L2-reopened`, `ui find LIVE`. Go back to the chat list. | In all three shots the message shows without "LIVE". |
+| L3 | Open the chat with pala. Five times, N from 1 to 5: start a live message (tap the message field first if typing doesn't reach it), `ui type "take N"`, wait as listed, tap the check mark, `ui shot L3-N-finished` at once, then `peer pala wait 5` and `ui shot L3-N-later`. Waits before the check mark: N=1 none, N=2 1 s, N=3 3 s, N=4 10 s, N=5 20 s (`peer pala wait <s>`). For each N say from the two pictures whether "LIVE" is above the message "take N". | No finished "take N" message shows "LIVE". |
+| L4 | Stay in the chat with pala. Three times, N from 1 to 3: `peer pala live '@<your profile name as pala sees it>' 'incoming N'`, `peer pala wait 5`, `ui shot L4-N-live`; then `peer pala live-update '@<the same name>' 'incoming N' end` (the same text, finished), `ui shot L4-N-finished` at once, `peer pala wait 5`, `ui shot L4-N-later`. For each N say from the pictures whether "LIVE" is above "incoming N" in L4-N-live and in the two later shots. Go back to the chat list. | Each received message shows "LIVE" while live, and not after it is finished. |
 
 ## A channel member's verified shield
 
