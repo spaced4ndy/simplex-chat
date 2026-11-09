@@ -41,27 +41,39 @@ normalise() {
   tr -cd '[:alnum:]' <<< "$1" | tr '[:upper:]' '[:lower:]' | tr l i
 }
 
-# "x y" of the text in the left pane, x below 390: a phrase equal to it, else the first containing it; with
-# "lowest", the lowest such phrase.
+# "x y" of the first phrase in the left pane, x below 390, that contains the text.
 left_xy() {
-  local target line x y text found="" lowest=""
+  local target line x y found=""
   target=$(normalise "$1")
   while IFS= read -r line; do
     x=${line%%,*}
     y=${line#*,}
     y=${y%% *}
-    text=$(normalise "${line#* }")
     [ "$x" -lt 390 ] || continue
-    case "$text" in
+    case "$(normalise "${line#* }")" in
       *"$target"*)
-        found=${found:-"$x $y"}
-        lowest="$x $y"
+        found="$x $y"
+        break
         ;;
     esac
   done < <("$ui" text)
-  if [ "${2:-}" = lowest ]; then
-    found=$lowest
-  fi
+  [ -n "$found" ] || return 1
+  echo "$found"
+}
+
+# "x y" of the lowest phrase on screen equal to the text: a form's button below its title of the same words.
+lowest_xy() {
+  local target line x y found="" max=-1
+  target=$(normalise "$1")
+  while IFS= read -r line; do
+    x=${line%%,*}
+    y=${line#*,}
+    y=${y%% *}
+    if [ "$(normalise "${line#* }")" = "$target" ] && [ "$y" -gt "$max" ]; then
+      max=$y
+      found="$x $y"
+    fi
+  done < <("$ui" text)
   [ -n "$found" ] || return 1
   echo "$found"
 }
@@ -141,7 +153,7 @@ hidden_profile_notice() {
   "$ui" click $((x + 90)) $((y + 40))
   "$ui" type cisecond
   "$ui" shot H1-typed
-  read -r x y < <(left_xy "Create profile" lowest) || read -r x y _ < <("$ui" find "Create profile") || return 1
+  read -r x y < <(lowest_xy "Create profile") || return 1
   "$ui" click "$x" "$y"
   sleep 3
   "$ui" key Escape
