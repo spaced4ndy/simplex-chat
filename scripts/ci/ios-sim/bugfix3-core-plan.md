@@ -26,5 +26,6 @@ A peer's chat name for the app is `citester`. **Connect to a peer by link:** `pe
 | D6 | Clear the row "bob" with its actions ("Clear conversation?" → "Clear"). `ui shot D6-cleared-live`. Then `ui relaunch`, `ui shot D6-cleared-after-restart`. | The row "bob" shows a time of today, not 01/01/70, and keeps its position. Record bug otherwise. |
 | D7 | Clear the row "club" with its actions. `ui relaunch`. `ui shot D7-group-cleared-after-restart`. | The row "club" shows a time of today, not 01/01/70. Record bug otherwise. |
 | D8 | `peer bob send '@citester' 'bob two'`, `peer bob wait 10`. `ui shot D8-new-message`. | The row "bob" shows "bob two" with today's time. |
+| D9 | Swipe the row "bob" to the right (`ui swipe 60 <y> 370 <y>`) and tap "Favorite". Swipe the row "club" to the right and tap its notifications action (labelled "Mute" or "Mentions"). Clear the row "bob" and the row "club" with their actions. `ui shot D9-icons-live`. Then `ui relaunch`, `ui shot D9-icons-after-restart`. | In both shots the row "bob" shows a star and the row "club" its notifications icon, each with a time of today. Record bug if a row shows no icon or 01/01/70. |
 
 Record a case ok when its shots are taken and its Expect holds, and bug when it doesn't, with what you saw; the reviewer decides from the screenshots in either case.

@@ -7,7 +7,7 @@
 backend: yes
 model: claude-sonnet-5-5
 sessions: core
-cases-core: F1, F2, F3, F4, F5, F6, D1, D2, D3, D4, D5, D6, D7, D8
+cases-core: F1, F2, F3, F4, F5, F6, D1, D2, D3, D4, D5, D6, D7, D8, D9
 layout-core: reachable
 plan-core: bugfix3-core-plan.md
 max-turns: 400
