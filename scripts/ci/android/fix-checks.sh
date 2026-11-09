@@ -82,16 +82,24 @@ server_error_readable() {
   "$ui" find "BROKER NETWORK connectError" > /dev/null
 }
 
+crashes() {
+  grep -c 'SIMPLEX *: App crashed' "$UI_OUT/app.log" || true
+}
+
+# On master the main thread waits about 30 s for the camera provider before the crash alert, so the check waits 60 s,
+# and reads the app's own crash line in logcat as well as the screen.
 no_crash_after_scanner() {
-  local deadline
+  local before deadline
+  before=$(crashes)
   "$ui" click-text "Start new chat" 10 || return 1
   "$ui" click-text "Paste link / Scan" 10 || return 1
   "$ui" wait "Or scan QR code" 10 || return 1
   "$ui" shot Q1-scanner
   "$ui" key BACK
-  deadline=$((SECONDS + 30))
+  deadline=$((SECONDS + 60))
   while [ "$SECONDS" -lt "$deadline" ]; do
-    if "$ui" find "View crashed" > /dev/null 2>&1; then
+    if [ "$(crashes)" -gt "$before" ] || "$ui" find "View crashed" > /dev/null 2>&1; then
+      sleep 2
       "$ui" shot Q2-crashed
       return 1
     fi
@@ -102,7 +110,7 @@ no_crash_after_scanner() {
 }
 
 hidden_profile_notice() {
-  local x y
+  local x y deadline
   "$ui" click-text "profile image placeholder" 10 || return 1
   "$ui" click-text "Your chat profiles" 10 || return 1
   "$ui" click-text "Add profile" 10 || return 1
@@ -111,10 +119,20 @@ hidden_profile_notice() {
   "$ui" click "$x" "$y"
   "$ui" type cisecond || return 1
   "$ui" click-text "Create profile" 10 || return 1
-  "$ui" wait "Your chat profiles" 30 || return 1
-  if "$ui" wait "Don't show again" 10; then
+  # "Make profile private!" covers the list once there are two profiles, and a dump then shows only the alert
+  deadline=$((SECONDS + 40))
+  until "$ui" find "Your chat profiles" > /dev/null 2>&1; do
+    if "$ui" find "Don't show again" > /dev/null 2>&1; then
+      "$ui" click-text "Don't show again" 5
+    fi
+    [ "$SECONDS" -lt "$deadline" ] || return 1
+    sleep 1
+  done
+  sleep 2
+  if "$ui" find "Don't show again" > /dev/null 2>&1; then
     "$ui" click-text "Don't show again" 5
   fi
+  "$ui" shot H1-profiles
   "$ui" wait citester 10 || return 1
   read -r x y _ < <("$ui" find citester) || return 1
   adb shell input swipe "$x" "$y" "$x" "$y" 1500
