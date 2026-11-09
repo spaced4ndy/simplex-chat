@@ -6,11 +6,9 @@
 # max-turns, max-budget-usd and max-minutes bound each session.
 backend: yes
 model: claude-sonnet-5-5
-sessions: before after
-cases-before: M1, M2, M3, M4, C4
-plan-before: bugfix3-plan.md
-cases-after: M1, M2, M3, M4, C4
-plan-after: bugfix3-plan.md
+sessions: before
+cases-before: F1, F2, F3, F4, F5, F6
+plan-before: bugfix3-core-plan.md
 max-turns: 450
 max-budget-usd: 20
-max-minutes: 30
+max-minutes: 40
