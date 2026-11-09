@@ -6,8 +6,8 @@
 # max-turns, max-budget-usd and max-minutes bound each session.
 backend: yes
 model: claude-sonnet-5-5
-sessions: before prefs banner live shield
-parallel: 3
+sessions: prefs
+parallel: 1
 cases-before: P1, P2, P3, P4, C1, C2, C5, C3, L5, M1, M2, M3, M4, C4
 plan-before: bugfix3-plan.md
 cases-prefs: P1, P2, P3, P4
