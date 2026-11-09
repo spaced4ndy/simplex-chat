@@ -1,6 +1,9 @@
-# What the Claude job needs for the session claude-test.md describes.
+# What the Claude job runs: each session in its own job, with the app at its first screen.
+# sessions (optional): their names, one session "main" with the whole prompt unless set; parallel: how many of their
+# jobs run at once, 1 unless set; cases-<session> and plan-<session> (optional): its cases and its plan file here.
 # backend: yes when the prompt uses the test backend; a run that asks for Claude must then start it too.
-# max-turns and max-budget-usd (optional) bound the session; claude-test.sh uses 60 and 3 when they're absent.
+# max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
 backend: no
 max-turns: 330
 max-budget-usd: 5
+max-minutes: 100
