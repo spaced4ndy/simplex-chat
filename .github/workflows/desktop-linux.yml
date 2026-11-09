@@ -242,6 +242,10 @@ jobs:
           distribution: corretto
           java-version: ${{ env.JAVA_VER }}
 
+      - name: Get JaCoCo
+        if: ${{ !cancelled() && steps.core.outcome == 'success' }}
+        run: scripts/ci/desktop-linux/coverage.sh get "$RUNNER_TEMP/jacoco"
+
       # the Kotlin compiler daemon otherwise gets gradle.properties' 2 GB, which compiling :common runs out of
       - name: Build app
         id: build
@@ -274,6 +278,7 @@ jobs:
         working-directory: apps/multiplatform
         env:
           SNAPSHOT_DIR: ${{ runner.temp }}/snapshots
+          JAVA_TOOL_OPTIONS: -javaagent:${{ runner.temp }}/jacoco/jacocoagent.jar=destfile=${{ runner.temp }}/coverage-exec/unit.exec,includes=chat.simplex.*
         run: ./gradlew --no-daemon --console=plain -Psimplex.assets.dir=../../assets -Pkotlin.daemon.jvmargs=-Xmx4g :common:desktopTest
 
       - name: Report desktop tests
@@ -294,6 +299,17 @@ jobs:
             cases=backend
           fi
           scripts/ci/desktop-linux/smoke-test.sh apps/multiplatform/release/main/app/simplex "$RUNNER_TEMP/smoke-test" ${cases:-}
+
+      - name: Run fix checks
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          JACOCO: ${{ runner.temp }}/jacoco
+          COVERAGE_EXEC: ${{ runner.temp }}/coverage-exec
+        run: scripts/ci/desktop-linux/fix-checks.sh apps/multiplatform/release/main/app/simplex "$RUNNER_TEMP/smoke-test/fix-checks"
+
+      - name: Coverage report
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: scripts/ci/desktop-linux/coverage.sh report "$RUNNER_TEMP/jacoco" "$RUNNER_TEMP/coverage-exec" "$RUNNER_TEMP/smoke-test/coverage"
 
       - name: Stop test backend
         if: ${{ !cancelled() && steps.backend.outcome != 'skipped' }}
