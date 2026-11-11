@@ -4,9 +4,9 @@
 # backend: yes when the prompt uses the test backend; a run that asks for Claude must then start it too.
 # max-turns and max-budget-usd (optional) bound each session, 60 and 3 unless set; max-minutes bounds it too.
 backend: yes
-sessions: kotlin
-cases-kotlin: S1, A1, A2, A3, Q1, Q2, Q3
-plan-kotlin: bugfix3-plan.md
-max-turns: 200
+sessions: date
+cases-date: S1, D1, D2, D3, D5, D6, D7, D8
+plan-date: date-plan.md
+max-turns: 250
 max-budget-usd: 10
 max-minutes: 60
