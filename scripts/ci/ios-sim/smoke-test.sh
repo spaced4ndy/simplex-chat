@@ -191,11 +191,17 @@ fi
 
 "$ui" wait "Continue" 60
 "$ui" shot your-network
-"$ui" tap "Continue"
+for attempt in 1 2 3; do
+  sleep 5
+  "$ui" tap "Continue" && break
+done
 
 "$ui" wait "Accept" 30
 "$ui" shot network-commitments
-"$ui" tap "Accept"
+for attempt in 1 2 3; do
+  sleep 5
+  "$ui" tap "Accept" && break
+done
 
 sleep 5
 "$ui" shot after-onboarding
