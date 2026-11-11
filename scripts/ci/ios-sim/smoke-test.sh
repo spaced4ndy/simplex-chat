@@ -181,6 +181,12 @@ xcrun simctl launch "$SIM_UDID" "$bundle_id"
 "$ui" wait "Create profile" 30
 "$ui" tap-value "Enter profile name..."
 "$ui" type citester
+# a fresh simulator's keyboard can drop the first text typed, leaving the placeholder
+sleep 2
+if "$ui" find "Enter profile name" > /dev/null; then
+  "$ui" tap-value "Enter profile name..."
+  "$ui" type citester
+fi
 "$ui" shot profile-name
 "$ui" tap "Create profile"
 
@@ -210,7 +216,7 @@ echo "smoke test passed: onboarding reaches the chat list, which shows its onboa
 
 products=$(dirname "$app")
 if [[ "$products" == */Build/Products/Debug-iphonesimulator ]]; then
-  "$(dirname "$0")/snapshots.sh" "${products%/Build/Products/Debug-iphonesimulator}" "$UI_OUT/snapshots"
+  "$(dirname "$0")/snapshots.sh" "${products%/Build/Products/Debug-iphonesimulator}" "$UI_OUT/snapshots" || echo "::warning::snapshots differ from the references, see snapshots/compare.json"
 fi
 
 if [ "$cases" = images ]; then

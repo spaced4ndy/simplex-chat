@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+from datetime import datetime, timezone
+
+HELP = """record <case> <ok|bug|blocked|manual> <note> [<screenshot>]
+  Records a case's result as one line of results.tsv in the session's directory, as soon as the case is done:
+  ok (passed), bug (the app did something wrong), blocked (the runner or a helper stopped the case), manual (the
+  case needs something no runner has). The note is one line saying what was seen; the screenshot is the name of
+  the shot that shows it. It then prints the next case of the session.
+record
+  Prints the results recorded so far and the session's cases still to record, with their text.
+No one answers questions during this session: never stop to ask. Whenever you are unsure which cases are left or
+what they say, for example after the conversation was compacted, run `record`."""
+
+CASE = re.compile(r"[A-Za-z0-9._-]{1,24}")
+RESULTS = ["ok", "bug", "blocked", "manual"]
+SHOT = re.compile(r"[A-Za-z0-9_.-]{1,80}")
+
+
+def session_cases():
+    return [c.strip() for c in os.environ.get("CASES", "").split(",") if c.strip()]
+
+
+def case_texts():
+    texts = {}
+    prompt = os.environ.get("PROMPT", "")
+    if os.path.exists(prompt):
+        with open(prompt) as f:
+            for line in f:
+                cells = line.split("|")
+                if line.startswith("| ") and len(cells) > 2:
+                    texts.setdefault(cells[1].strip(), line.rstrip("\n"))
+    return texts
+
+
+def cases_left(path):
+    recorded = set()
+    if os.path.exists(path):
+        with open(path) as f:
+            recorded = {line.split("\t", 1)[0] for line in f}
+    return [c for c in session_cases() if c not in recorded]
+
+
+def record(path, platform, case, result, note, shot=""):
+    if not CASE.fullmatch(case):
+        return f"case {case!r} must be its ID: letters, digits, '.', '_' or '-'"
+    if result not in RESULTS:
+        return f"result {result!r} is not one of {', '.join(RESULTS)}"
+    if not note or len(note) > 400 or re.search(r"[\x00-\x1f\x7f]", note):
+        return "the note must be one line of 1 to 400 characters"
+    if shot and not SHOT.fullmatch(shot):
+        return f"screenshot {shot!r} must be a file name"
+    time = datetime.now(timezone.utc).strftime("%H:%M:%S")
+    with open(path, "a") as f:
+        f.write("\t".join([case, platform, result, note, shot, time]) + "\n")
+    with open(path) as f:
+        cases = {line.split("\t", 1)[0] for line in f}
+    print(f"recorded {case}: {result}; {len(cases)} cases recorded in this session")
+    left = cases_left(path)
+    if left:
+        print(f"next case, {len(left)} left: {case_texts().get(left[0], left[0])}")
+    elif session_cases():
+        print("every case of this session is recorded: run each case recorded bug once more, then finish")
+    return None
+
+
+def main(args):
+    path = os.environ.get("RESULTS")
+    if not path:
+        print("error: RESULTS is not set, so results can't be recorded in this session")
+        return 1
+    if not args:
+        print(HELP)
+        recorded = ""
+        if os.path.exists(path):
+            with open(path) as f:
+                recorded = f.read().rstrip()
+        print(f"\nRecorded so far:\n{recorded or 'nothing'}")
+        left = cases_left(path)
+        if session_cases():
+            texts = case_texts()
+            print(f"\nCases left, {len(left)}:" if left else "\nEvery case of this session is recorded.")
+            for c in left:
+                print(texts.get(c, c))
+        return 0
+    if not 3 <= len(args) <= 4:
+        print(HELP)
+        return 2
+    error = record(path, os.environ.get("PLATFORM", ""), *args)
+    if error:
+        print(f"error: {error}\n{HELP}")
+        return 2
+    return 0
+
+
+sys.exit(main(sys.argv[1:]))
