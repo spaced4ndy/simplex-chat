@@ -281,7 +281,7 @@ jobs:
         run: |
           if [ "$BACKEND" = success ]; then
             export NAMES_SERVER=$(cat "$RUNNER_TEMP/backend/names-server")
-            cases=backend
+            cases=setup
           fi
           scripts/ci/desktop-linux/smoke-test.sh apps/multiplatform/release/main/app/simplex "$RUNNER_TEMP/smoke-test" ${cases:-}
 
