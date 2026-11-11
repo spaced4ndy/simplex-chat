@@ -88,7 +88,6 @@ jobs:
   app:
     name: app in the iOS simulator
     needs: plan
-    if: false
     runs-on: macos-26
     timeout-minutes: 360
     env:
@@ -218,13 +217,10 @@ jobs:
       - name: Build each fix's app from its head
         run: |
           for fix in \
-            prefs:058b9f6b37c096053cc9d43d18d8ae0b56bab090 \
-            banner:140c6d7c0bcca4cbdcc908bed0f9cd02936458bc \
-            live:89fea020b7a56ac635783b5d54a0fae0b5e53d8d \
-            shield:9a2075693ab15c0b0f715a09de88aa9ee78fe8ad; do
+            date:f/fix-chat-row-date; do
             name=${fix%%:*}
-            sha=${fix#*:}
-            git fetch -q --depth=1 origin "$sha"
+            ref=${fix#*:}
+            git fetch -q --depth=1 origin "$ref"
             other=$(git diff --name-only HEAD FETCH_HEAD -- apps/ios ':(exclude)*.swift')
             if [ -n "$other" ]; then
               echo "::error::$name changes iOS files other than Swift sources: $other"
@@ -257,38 +253,11 @@ jobs:
             git checkout HEAD -- $files
           done
 
-      - name: Upload the contact preferences fix's app
+      - name: Upload the chat row date fix's app
         uses: actions/upload-artifact@v7
         with:
-          name: ios-sim-app-prefs
-          path: ${{ runner.temp }}/prefs/SimpleX.app.tar.gz
-          compression-level: 0
-          retention-days: 14
-          if-no-files-found: error
-
-      - name: Upload the chat banner fix's app
-        uses: actions/upload-artifact@v7
-        with:
-          name: ios-sim-app-banner
-          path: ${{ runner.temp }}/banner/SimpleX.app.tar.gz
-          compression-level: 0
-          retention-days: 14
-          if-no-files-found: error
-
-      - name: Upload the live message fix's app
-        uses: actions/upload-artifact@v7
-        with:
-          name: ios-sim-app-live
-          path: ${{ runner.temp }}/live/SimpleX.app.tar.gz
-          compression-level: 0
-          retention-days: 14
-          if-no-files-found: error
-
-      - name: Upload the channel member shield fix's app
-        uses: actions/upload-artifact@v7
-        with:
-          name: ios-sim-app-shield
-          path: ${{ runner.temp }}/shield/SimpleX.app.tar.gz
+          name: ios-sim-app-date
+          path: ${{ runner.temp }}/date/SimpleX.app.tar.gz
           compression-level: 0
           retention-days: 14
           if-no-files-found: error
@@ -320,8 +289,8 @@ jobs:
   # The app-sim-claude environment's branch rule decides which branches may use the token.
   claude:
     name: Claude tests the iOS app (${{ matrix.session }})
-    needs: plan
-    if: ${{ !cancelled() && needs.plan.outputs.run-claude == 'true' }}
+    needs: [plan, app]
+    if: ${{ !cancelled() && needs.plan.outputs.run-claude == 'true' && needs.app.result == 'success' }}
     runs-on: macos-26
     timeout-minutes: 330
     strategy:
@@ -357,10 +326,8 @@ jobs:
       - name: Download app
         uses: actions/download-artifact@v8
         with:
-          name: ${{ startsWith(matrix.session, 'before') && 'ios-sim-app' || format('ios-sim-app-{0}', matrix.session) }}
+          name: ${{ matrix.session == 'date' && 'ios-sim-app-date' || 'ios-sim-app' }}
           path: ${{ runner.temp }}
-          run-id: 42656328725
-          github-token: ${{ github.token }}
 
       - name: Unpack app
         run: tar -xzf "$RUNNER_TEMP/SimpleX.app.tar.gz" -C "$RUNNER_TEMP"
