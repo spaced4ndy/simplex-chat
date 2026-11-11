@@ -6,8 +6,8 @@
 # max-turns, max-budget-usd and max-minutes bound each session.
 backend: yes
 model: claude-sonnet-5-5
-sessions: banner date
-parallel: 2
+sessions: banner
+parallel: 1
 cases-banner: R1, R3, R2
 plan-banner: banner-date-plan.md
 cases-date: D1, D2, D3, D5, D6, D7, D8

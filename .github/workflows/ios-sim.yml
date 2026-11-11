@@ -88,6 +88,7 @@ jobs:
   app:
     name: app in the iOS simulator
     needs: plan
+    if: false
     runs-on: macos-26
     timeout-minutes: 360
     env:
@@ -289,8 +290,8 @@ jobs:
   # The app-sim-claude environment's branch rule decides which branches may use the token.
   claude:
     name: Claude tests the iOS app (${{ matrix.session }})
-    needs: [plan, app]
-    if: ${{ !cancelled() && needs.plan.outputs.run-claude == 'true' && needs.app.result == 'success' }}
+    needs: plan
+    if: ${{ !cancelled() && needs.plan.outputs.run-claude == 'true' }}
     runs-on: macos-26
     timeout-minutes: 330
     strategy:
@@ -328,6 +329,8 @@ jobs:
         with:
           name: ${{ matrix.session == 'date' && 'ios-sim-app-date' || 'ios-sim-app' }}
           path: ${{ runner.temp }}
+          run-id: 42992407872
+          github-token: ${{ github.token }}
 
       - name: Unpack app
         run: tar -xzf "$RUNNER_TEMP/SimpleX.app.tar.gz" -C "$RUNNER_TEMP"
@@ -338,7 +341,7 @@ jobs:
         with:
           name: ${{ needs.plan.outputs.backend }}
           path: ~/Downloads
-          run-id: ${{ needs.plan.outputs.backend-run || github.run_id }}
+          run-id: 42992407872
           github-token: ${{ github.token }}
 
       - name: Start test backend

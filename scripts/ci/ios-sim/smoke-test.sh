@@ -183,8 +183,7 @@ xcrun simctl launch "$SIM_UDID" "$bundle_id"
 "$ui" type citester
 # a fresh simulator's keyboard can drop the first text typed, leaving the placeholder
 sleep 2
-if "$ui" find "Enter profile name" > /dev/null; then
-  "$ui" tap-value "Enter profile name..."
+if "$ui" find "Enter profile name" > /dev/null && "$ui" tap-value "Enter profile name..."; then
   "$ui" type citester
 fi
 "$ui" shot profile-name
