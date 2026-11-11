@@ -221,4 +221,8 @@ if [ "$cases" = images ]; then
   send_image jpg "$test_card_x" 1280x720
   send_image png "$logo_x" 1630x466
   echo "smoke test passed: images"
+  "$ui" tap Back 10 || "$ui" swipe 1 400 300 400
+  sleep 3
+  "$ui" shot list-after-group
+  "$ui" find Groups || echo "no Groups filter in the tree"
 fi
