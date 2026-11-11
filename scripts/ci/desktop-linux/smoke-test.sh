@@ -313,8 +313,12 @@ connect_by_name() {
   check "$name_label.testing resolves to ci_contact" "$ui" wait ci_contact 60
   check "the app offers to open a new chat with ci_contact" "$ui" wait "Open new chat" 10
   "$ui" shot name-resolved
-  "$ui" click-text Cancel 10 || "$ui" key Escape
-  back_to_chat_list || fail "no chat list after the name's alert"
+  "$ui" click-text "Open new chat" 10
+  sleep 3
+  back_to_chat_list || fail "no chat list after opening the new chat"
+  "$ui" shot contact-added
+  check "the Contacts filter is shown after the contact is added" on_screen "Contacts"
+  check "the Groups filter is still shown" on_screen "Groups"
 }
 
 sent_files() {
@@ -422,6 +426,7 @@ if [ "$cases" = onboarding ]; then
 fi
 
 create_local_chat
+check "the Groups filter is shown after the group is created" on_screen "Groups"
 if [ "$cases" = setup ] || [ "$cases" = backend ]; then
   : "${NAMES_SERVER:?NAMES_SERVER must be the test SMP server address}"
   use_names_server
