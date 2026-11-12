@@ -210,6 +210,31 @@ check_layout() {
   fi
 }
 
+about_link() {
+  local toolbar_top link_y tagline_y
+  toolbar_top=$(( $(y_of "Search or paste SimpleX link") - 28 ))
+  open_settings
+  "$ui" click-text "Help" 10
+  "$ui" click-text "About" 10
+  "$ui" wait "Private and secure messaging" 10
+  "$ui" shot about
+  check "about: \"Why SimpleX is built.\" shown" on_screen "Why SimpleX is built"
+  link_y=$(y_of "Why SimpleX is built") || link_y=900
+  check "about: the link (y $link_y) above the bottom toolbar (top $toolbar_top)" [ "$link_y" -lt "$toolbar_top" ]
+  "$ui" click-text "Why SimpleX is built" 10
+  check "about: the link opens the text" "$ui" wait "You were born without an account" 10
+  "$ui" shot why-built
+  "$ui" scroll 400 400 down 40
+  "$ui" shot why-built-end
+  tagline_y=$(y_of "Be free in your network") || tagline_y=900
+  check "about: the text's last line (y $tagline_y) above the bottom toolbar (top $toolbar_top)" [ "$tagline_y" -lt "$toolbar_top" ]
+  "$ui" key Escape
+  check "about: About shown again after the text is closed" "$ui" wait "Why SimpleX is built" 10
+  "$ui" shot about-again
+  check "about: the text closed" not_on_screen "You were born without an account"
+  back_to_chat_list || fail "no chat list after About"
+}
+
 # A group of the user's own: without chats the chat list shows no search field.
 create_local_chat() {
   local y
@@ -433,6 +458,7 @@ if [ "$cases" = setup ] || [ "$cases" = backend ]; then
 fi
 
 check_layout bottom
+about_link
 use_top_toolbar
 check_layout top
 send_images
