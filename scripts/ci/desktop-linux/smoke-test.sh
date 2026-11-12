@@ -212,7 +212,7 @@ check_layout() {
 
 about_link() {
   local toolbar_top link_y tagline_y
-  toolbar_top=$(( $(y_of "Search or paste SimpleX link") - 28 ))
+  toolbar_top=$(( $(y_of "Chats") - 28 ))
   open_settings
   "$ui" click-text "Help" 10
   "$ui" click-text "About" 10
