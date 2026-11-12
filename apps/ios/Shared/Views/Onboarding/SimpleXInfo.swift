@@ -146,3 +146,9 @@ struct SimpleXInfo_Previews: PreviewProvider {
         SimpleXInfo(onboarding: true)
     }
 }
+
+struct SimpleXInfoFromSettings_Previews: PreviewProvider {
+    static var previews: some View {
+        SimpleXInfo(onboarding: false)
+    }
+}
