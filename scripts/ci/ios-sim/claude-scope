@@ -18,6 +18,6 @@ cases-live: P1, L5
 plan-live: bugfix3-plan.md
 cases-shield: M1, M2, M3, M4
 plan-shield: bugfix3-plan.md
-max-turns: 450
-max-budget-usd: 20
-max-minutes: 85
+max-turns: 150
+max-budget-usd: 3
+max-minutes: 45

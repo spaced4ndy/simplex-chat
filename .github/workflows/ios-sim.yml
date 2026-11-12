@@ -357,9 +357,9 @@ jobs:
       - name: Download app
         uses: actions/download-artifact@v8
         with:
-          name: ${{ startsWith(matrix.session, 'before') && 'ios-sim-app' || format('ios-sim-app-{0}', matrix.session) }}
+          name: ios-sim-app
           path: ${{ runner.temp }}
-          run-id: 42656328725
+          run-id: 43195746649
           github-token: ${{ github.token }}
 
       - name: Unpack app
@@ -369,9 +369,9 @@ jobs:
         if: needs.plan.outputs.claude-backend == 'yes'
         uses: actions/download-artifact@v8
         with:
-          name: ${{ needs.plan.outputs.backend }}
+          name: ios-sim-backend-f92cd1ae30fc46bb0bc08819a2890cd8b0ae8b357946f8b3171c68d9a1e26b87
           path: ~/Downloads
-          run-id: 42656328725
+          run-id: 42992407872
           github-token: ${{ github.token }}
 
       - name: Start test backend
