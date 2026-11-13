@@ -116,6 +116,7 @@ runRemoteTests = do
     it "refuses invalid client cert" remoteHandshakeRejectTest
     it "connects with stored server bindings" storedBindingsTest
   it "sends messages" remoteMessageTest
+  it "refuses to set the store service from a paired device" remoteStoreServiceTest
   describe "remote files" $ do
     it "store/get/send/receive files" remoteStoreFileTest
     it "should send files from CLI without /store" remoteCLIFileTest
@@ -282,6 +283,13 @@ remoteMessageTest = testRemote3 $ \compress mobile desktop bob -> do
 
   threadDelay 1000000
   logNote "done"
+
+remoteStoreServiceTest :: HasCallStack => ((Bool, Bool), TestParams) -> IO ()
+remoteStoreServiceTest = testRemote $ \compress mobile desktop -> do
+  startRemote compress mobile desktop
+  desktop ##> "/_store service https://smp5.simplex.im/a#ooSNWlEZTO2RPE0Ff5ZoybAs5zEhWLMlQrXesnhaZHM"
+  desktop <## "remote host 1 error: RHELocalCommand"
+  stopMobile mobile desktop
 
 remoteStoreFileTest :: HasCallStack => ((Bool, Bool), TestParams) -> IO ()
 remoteStoreFileTest =

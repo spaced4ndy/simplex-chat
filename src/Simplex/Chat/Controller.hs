@@ -151,6 +151,7 @@ data ChatConfig = ChatConfig
     badgePublicKeys :: Map Int BBSPublicKey,
     -- Nothing until the store service is deployed
     storeServiceAddress :: Maybe (ConnectTarget 'CMContact),
+    storeServiceDev :: Bool,
     -- the only clock badge code reads, so tests can shift it; production arithmetic is unchanged
     badgeCurrentTime :: IO UTCTime,
     -- how long a badge worker waits before repeating a renewal that failed for a passing reason
@@ -340,6 +341,7 @@ data ChatController = ChatController
     badgeWorkers :: TMap UserId (SessionVar BadgeWorker),
     storeReceiptWorkers :: TMap UserId Worker,
     badgeSeq :: TVar Int,
+    currentStoreService :: TVar (Maybe (ConnectTarget 'CMContact)),
     relayGroupLinkChecksAsync :: TVar (Maybe (Async ())),
     webPreviewState :: Maybe WebPreviewState,
     chatRelayTests :: TMap ConnId RelayTest,
@@ -686,6 +688,7 @@ data ChatCommand
   -- alert distinct from the next, and the app returns whatever it was given
   | APIAckBadgeAlert {userId :: UserId, badgePurchaseId :: Int64, alertKind :: BadgeAlertKind, snooze :: Bool, episode :: Text}
   | APIRequestBadge {userId :: UserId}
+  | APISetStoreService (ConnectTarget 'CMContact)
   | ShowProfileImage
   | SetUserFeature AChatFeature FeatureAllowed -- UserId (not used in UI)
   | SetContactFeature AChatFeature ContactName (Maybe FeatureAllowed)
@@ -794,6 +797,7 @@ allowRemoteCommand = \case
   ExecChatStoreSQL _ -> False
   ExecAgentStoreSQL _ -> False
   APIRequestBadge {} -> False
+  APISetStoreService _ -> False
   _ -> True
 
 data RelayConnectionResult = RelayConnectionResult

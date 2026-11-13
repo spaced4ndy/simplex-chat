@@ -3702,6 +3702,10 @@ processChatCommand cxt nm = \case
     lift $ startBadgeWork user
     badgeStateResponse user
   APIRequestBadge userId -> withUserId userId requestBadgeNow
+  APISetStoreService address -> do
+    unlessM (asks $ storeServiceDev . config) $ throwCmdError "/_store service is only available in builds for a dev store service"
+    asks currentStoreService >>= atomically . (`writeTVar` Just address)
+    ok_
   SetBotCommands commands -> withUserProfileLock "updateProfile" $ withUser $ \user@User {profile} -> do
     let LocalProfile {preferences} = profile
         prefs = Just (fromMaybe emptyChatPrefs preferences :: Preferences) {commands = Just commands}
@@ -5684,7 +5688,7 @@ stashBadgeKeys user stash_ createStash = do
   maybe (withStore' createStash) pure stash_
 
 requireStoreService :: CM (ConnectTarget 'CMContact)
-requireStoreService = asks (storeServiceAddress . config) >>= maybe (throwRedeemError BREServiceNotConfigured) pure
+requireStoreService = asks currentStoreService >>= readTVarIO >>= maybe (throwRedeemError BREServiceNotConfigured) pure
 
 refuseWhileBadgeHeld :: User -> CM ()
 refuseWhileBadgeHeld user = whenM (withStore' (`userHasBadge` user)) $ throwRedeemError BREBadgeActive
@@ -5754,7 +5758,7 @@ badgeNow = asks (badgeCurrentTime . config) >>= liftIO
 -- | A signal carries nothing: each pass derives its work from stored state, so a signal lost or
 -- duplicated changes no outcome.
 startBadgeWork :: User -> CM' ()
-startBadgeWork user = whenM (isJust <$> asks (storeServiceAddress . config)) $ void $ getBadgeWorker user
+startBadgeWork user = whenM (isJust <$> (asks currentStoreService >>= readTVarIO)) $ void $ getBadgeWorker user
 
 -- | Sent off the shared request moment, so only a build for a dev store service may send it.
 requestBadgeNow :: User -> CM ChatResponse
@@ -6331,7 +6335,7 @@ badgeErrorRetry = badgeFailureTransient . badgeIssueFailure
 -- nothing else records one.
 requestBadgeIssue :: UserId -> UserBadgePurchase -> UTCTime -> CM (Either (StoreServiceErrorCode, Maybe Word32) (StatementEntry, Maybe SubscriptionState))
 requestBadgeIssue userId p now = do
-  sendTarget <- asks (storeServiceAddress . config) >>= maybe (throwCmdError "store service not configured") pure
+  sendTarget <- asks currentStoreService >>= readTVarIO >>= maybe (throwCmdError "store service not configured") pure
   withEntityLock "badgeIssue" (CLBadgeUser userId) $ sendBadgeIssue sendTarget userId p STCIssueBadge (recordBadgeIssueFailure p) now
 
 recordBadgeIssueFailure :: UserBadgePurchase -> BadgeIssueFailure -> CM ()
@@ -6916,6 +6920,7 @@ chatCommandP =
       "/_badge ledger " *> (APIGetBadgeLedger <$> A.decimal <* A.space <*> A.decimal),
       "/_badge ack " *> (APIAckBadgeAlert <$> A.decimal <* A.space <*> A.decimal <* A.space <*> badgeAlertKindP <* A.space <*> onOffP <* A.space <*> textP),
       "/_badge request " *> (APIRequestBadge <$> A.decimal),
+      "/_store service " *> (APISetStoreService <$> strP),
       "/_service_response " *> (APISendServiceResponse <$> A.decimal <* A.space <*> strP <* A.space <*> jsonP),
       "/_wallet create new" $> APICreateWallet,
       "/_wallet create account " *> (APICreateWalletAccount <$> A.decimal),

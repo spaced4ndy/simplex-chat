@@ -100,6 +100,7 @@ storeServiceTests :: SpecWith TestParams
 storeServiceTests = do
   it "should answer unsupported_version to unsupported command" testStoreServiceUnsupported
   it "should redeem an issued code into a badge a contact sees" testRedeemBadgeCode
+  it "should reach the store service set in a dev build, and refuse to set it in a shipped one" testSetStoreService
   it "should return the same badge when the same code is redeemed twice" testRedeemBadgeCodeTwice
   it "should answer code_invalid to an unknown code, indistinguishably from a malformed one" testRedeemUnknownCode
   it "should tell a second profile redeeming the same code that it is used" testRedeemSameCodeOtherProfile
@@ -495,6 +496,26 @@ testRedeemBadgeCode ps =
         bob <## "connection not verified, use /code command to see security code"
         bob <## "quantum resistant end-to-end encryption"
         bob <## currentChatVRangeInfo
+
+testSetStoreService :: HasCallStack => TestParams -> IO ()
+testSetStoreService ps =
+  withStoreService ps $ \clientCfg bsLink cc -> do
+    withNewTestChatCfg ps clientCfg {storeServiceAddress = Nothing, storeServiceDev = True} "alice" aliceProfile $ \alice -> do
+      code <- issueCode cc BTSupporter 1
+      alice ##> ("/_redeem_badge_code 1 " <> codeArg code)
+      alice <## "cannot get badge: store service not configured"
+      alice ##> ("/_store service " <> bsLink)
+      alice <## "ok"
+      alice ##> ("/_redeem_badge_code 1 " <> codeArg code)
+      alice <## "badge redeemed"
+      alice <## "supporter badge - active"
+      alice <##. "expires "
+    withNewTestChatCfg ps clientCfg {storeServiceAddress = Nothing} "bob" bobProfile $ \bob -> do
+      bob ##> ("/_store service " <> bsLink)
+      bob <## "bad chat command: /_store service is only available in builds for a dev store service"
+      code <- issueCode cc BTSupporter 1
+      bob ##> ("/_redeem_badge_code 1 " <> codeArg code)
+      bob <## "cannot get badge: store service not configured"
 
 testRedeemBadgeCodeTwice :: HasCallStack => TestParams -> IO ()
 testRedeemBadgeCodeTwice ps =
