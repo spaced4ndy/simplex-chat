@@ -500,12 +500,10 @@ testRedeemBadgeCode ps =
 testSetStoreService :: HasCallStack => TestParams -> IO ()
 testSetStoreService ps =
   withStoreService ps $ \clientCfg bsLink cc -> do
-    withNewTestChatCfg ps clientCfg {storeServiceAddress = Nothing, storeServiceDev = True} "alice" aliceProfile $ \alice -> do
-      code <- issueCode cc BTSupporter 1
-      alice ##> ("/_redeem_badge_code 1 " <> codeArg code)
-      alice <## "cannot get badge: store service not configured"
+    withNewTestChatCfg ps clientCfg {storeServiceAddress = storeServiceAddress testCfg, storeServiceDev = True} "alice" aliceProfile $ \alice -> do
       alice ##> ("/_store service " <> bsLink)
       alice <## "ok"
+      code <- issueCode cc BTSupporter 1
       alice ##> ("/_redeem_badge_code 1 " <> codeArg code)
       alice <## "badge redeemed"
       alice <## "supporter badge - active"
