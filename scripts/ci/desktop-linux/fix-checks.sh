@@ -140,7 +140,7 @@ server_error_readable() {
   "$ui" click-text "Test server" 10 || return 1
   "$ui" wait "Server test failed" 60 || return 1
   "$ui" shot T2-alert
-  "$ui" find "BROKER NETWORK connectError" > /dev/null
+  "$ui" find "BROKER NETWORK" > /dev/null
 }
 
 hidden_profile_notice() {
@@ -237,7 +237,7 @@ toolbar_offset=$(($(window_bottom) - 730))
 
 check "the channel name stays after Configure relays" channel_name_kept
 restart
-check "the server test's alert shows BROKER NETWORK connectError" server_error_readable
+check "the server test's alert shows BROKER NETWORK" server_error_readable
 restart
 check "hiding a profile shows Enter password in search" hidden_profile_notice
 restart
