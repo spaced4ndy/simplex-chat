@@ -3704,7 +3704,7 @@ processChatCommand cxt nm = \case
   APIRequestBadge userId -> withUserId userId requestBadgeNow
   APISetStoreService address -> do
     unlessM (asks $ storeServiceDev . config) $ throwCmdError "/_store service is only available in builds for a dev store service"
-    asks currentStoreService >>= atomically . (`writeTVar` Just address)
+    chatWriteVar currentStoreService (Just address)
     ok_
   SetBotCommands commands -> withUserProfileLock "updateProfile" $ withUser $ \user@User {profile} -> do
     let LocalProfile {preferences} = profile
@@ -5688,7 +5688,7 @@ stashBadgeKeys user stash_ createStash = do
   maybe (withStore' createStash) pure stash_
 
 requireStoreService :: CM (ConnectTarget 'CMContact)
-requireStoreService = asks currentStoreService >>= readTVarIO >>= maybe (throwRedeemError BREServiceNotConfigured) pure
+requireStoreService = chatReadVar currentStoreService >>= maybe (throwRedeemError BREServiceNotConfigured) pure
 
 refuseWhileBadgeHeld :: User -> CM ()
 refuseWhileBadgeHeld user = whenM (withStore' (`userHasBadge` user)) $ throwRedeemError BREBadgeActive
@@ -5758,7 +5758,7 @@ badgeNow = asks (badgeCurrentTime . config) >>= liftIO
 -- | A signal carries nothing: each pass derives its work from stored state, so a signal lost or
 -- duplicated changes no outcome.
 startBadgeWork :: User -> CM' ()
-startBadgeWork user = whenM (isJust <$> (asks currentStoreService >>= readTVarIO)) $ void $ getBadgeWorker user
+startBadgeWork user = whenM (isJust <$> chatReadVar' currentStoreService) $ void $ getBadgeWorker user
 
 -- | Sent off the shared request moment, so only a build for a dev store service may send it.
 requestBadgeNow :: User -> CM ChatResponse
@@ -6335,7 +6335,7 @@ badgeErrorRetry = badgeFailureTransient . badgeIssueFailure
 -- nothing else records one.
 requestBadgeIssue :: UserId -> UserBadgePurchase -> UTCTime -> CM (Either (StoreServiceErrorCode, Maybe Word32) (StatementEntry, Maybe SubscriptionState))
 requestBadgeIssue userId p now = do
-  sendTarget <- asks currentStoreService >>= readTVarIO >>= maybe (throwCmdError "store service not configured") pure
+  sendTarget <- chatReadVar currentStoreService >>= maybe (throwCmdError "store service not configured") pure
   withEntityLock "badgeIssue" (CLBadgeUser userId) $ sendBadgeIssue sendTarget userId p STCIssueBadge (recordBadgeIssueFailure p) now
 
 recordBadgeIssueFailure :: UserBadgePurchase -> BadgeIssueFailure -> CM ()
