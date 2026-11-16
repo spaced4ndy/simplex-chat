@@ -6321,7 +6321,7 @@ badgeErrorRetry = badgeFailureTransient . badgeIssueFailure
 -- nothing else records one.
 requestBadgeIssue :: UserId -> UserBadgePurchase -> UTCTime -> CM (Either (StoreServiceErrorCode, Maybe Word32) (StatementEntry, Maybe SubscriptionState))
 requestBadgeIssue userId p now = do
-  sendTarget <- chatReadVar currentStoreService >>= maybe (throwCmdError "store service not configured") pure
+  sendTarget <- asks (storeServiceAddress . config) >>= maybe (throwCmdError "store service not configured") pure
   withEntityLock "badgeIssue" (CLBadgeUser userId) $ sendBadgeIssue sendTarget userId p STCIssueBadge (recordBadgeIssueFailure p) now
 
 recordBadgeIssueFailure :: UserBadgePurchase -> BadgeIssueFailure -> CM ()

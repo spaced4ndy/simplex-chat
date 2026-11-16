@@ -500,7 +500,7 @@ testRedeemBadgeCode ps =
 testSetStoreService :: HasCallStack => TestParams -> IO ()
 testSetStoreService ps =
   withStoreService ps $ \clientCfg bsLink cc -> do
-    withNewTestChatCfg ps clientCfg {storeServiceAddress = storeServiceAddress testCfg, storeServiceDev = True, badgeDevRequests = True} "alice" aliceProfile $ \alice -> do
+    withNewTestChatCfg ps clientCfg {storeServiceAddress = Nothing, storeServiceDev = True, badgeDevRequests = True} "alice" aliceProfile $ \alice -> do
       alice ##> ("/_store service " <> bsLink)
       alice <## "ok"
       code <- issueCode cc BTSupporter 1
