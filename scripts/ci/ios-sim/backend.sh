@@ -412,6 +412,10 @@ start() {
   "$bin/simplex-chat" --version
   "$bin/simplex-directory-service" --version
   "$bin/smp-server" --version
+  echo none > "$work/directory-link"
+  echo none > "$work/names-server"
+  echo "# No test directory in this session" > "$work/seed.md"
+  return
   make_avatars
 
   start_names
