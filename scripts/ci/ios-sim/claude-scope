@@ -7,7 +7,7 @@
 backend: yes
 model: claude-sonnet-5-5
 sessions: prefs
-cases-prefs: P1, P2, P3, P4, P5
+cases-prefs: P1, P2, P3, P4, P5, P6
 plan-prefs: bugfix3-plan.md
 max-turns: 180
 max-budget-usd: 4
