@@ -293,7 +293,7 @@ jobs:
             export NAMES_SERVER=$(cat "$RUNNER_TEMP/backend/names-server")
             cases=backend
           fi
-          scripts/ci/desktop-linux/smoke-test.sh apps/multiplatform/release/main/app/simplex "$RUNNER_TEMP/smoke-test" ${cases:-}
+          scripts/ci/desktop-linux/smoke-test.sh apps/multiplatform/release/main/app/simplex "$RUNNER_TEMP/smoke-test" ${cases:-leave-group}
 
       - name: Stop test backend
         if: ${{ !cancelled() && steps.backend.outcome != 'skipped' }}
