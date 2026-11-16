@@ -15,6 +15,7 @@
 #   ui wait <text> [secs]         wait up to secs (30) until the text is on screen
 #   ui click <x> <y>              click at x,y
 #   ui right-click <x> <y>        right-click at x,y, e.g. to open a list row's menu
+#   ui drag <x1> <y1> <x2> <y2>   press the mouse at x1,y1, move it to x2,y2 and release it, e.g. to select text
 #   ui click-text <text> [secs]   wait up to secs (20) for the text and click its centre
 #   ui scroll <x> <y> <up|down> [clicks]
 #                                 turn the mouse wheel over x,y, 3 clicks unless given
@@ -23,8 +24,11 @@
 #                                 with red, green or blue, fail unless that colour dominates
 #   ui type <text>                type into the focused field
 #   ui key <key>...               press keys named as in xdotool (Return, Escape, ctrl+a)
+#   ui clipboard [<text>]         put the text on the clipboard, to paste it in the app; without a text, print what
+#                                 the clipboard holds, e.g. a link the app copied
 #   ui do <command> [args] -- <command> [args] ...
 #                                 run the commands in order, stopping at the first that fails
+#   ui relaunch                   quit the app and start it again with its data, as a user restarting it would
 #   ui stop                       stop the app, openbox and Xvfb
 #
 # Text is compared ignoring case, spaces and punctuation, with a capital I and a lowercase l alike; a phrase that is
@@ -91,6 +95,13 @@ start() {
     mkdir -p "$(dirname "$settings")"
     printf '%s\n' "$@" > "$settings"
   fi
+  echo "$app_dir" > "$state/app-dir"
+  launch_app
+}
+
+launch_app() {
+  local app_dir
+  app_dir=$(cat "$state/app-dir")
   XDG_DATA_HOME="$state/data" \
     XDG_CONFIG_HOME="$state/config" \
     JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=$state/tmp -Dskiko.renderApi=SOFTWARE" \
@@ -252,6 +263,12 @@ case "${1:-}" in
     click "$2" "$3" 3
     log "right-click $2,$3"
     ;;
+  drag)
+    for n in "$2" "$3" "$4" "$5"; do number "$n"; done
+    xdotool mousemove --sync "$2" "$3" mousedown 1 sleep 0.3 mousemove --sync "$4" "$5" sleep 0.3 mouseup 1
+    sleep 1
+    log "drag $2,$3 to $4,$5"
+    ;;
   click-text)
     secs=${3:-20}
     number "$secs"
@@ -286,6 +303,16 @@ case "${1:-}" in
     done
     log "key $*"
     ;;
+  clipboard)
+    if [ $# -ge 2 ]; then
+      printf '%s' "$2" | xclip -selection clipboard -in > /dev/null 2>&1
+      log "clipboard set"
+    else
+      xclip -selection clipboard -out
+      echo
+      log "clipboard read"
+    fi
+    ;;
   do)
     shift
     command=()
@@ -297,6 +324,11 @@ case "${1:-}" in
         command=()
       fi
     done
+    ;;
+  relaunch)
+    stop_process app 10
+    launch_app
+    log "relaunch"
     ;;
   stop)
     stop_process app 10

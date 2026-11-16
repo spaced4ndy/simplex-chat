@@ -4,7 +4,7 @@ You are testing the SimpleX Chat iOS app in an iPhone 17 simulator (iOS 26.5, sc
 
 ## Tools
 
-- **Bash runs only the `ui` helper**, one command per call: `ui tap "Create profile"`, `ui find Settings`. Any other program, a pipe, a redirection, `;` or `&&` is denied. Its commands are listed under "The ui commands" below.
+- **Bash runs only the `ui`, `record` and `peer` helpers**, one command per call: `ui tap "Create profile"`, `ui find Settings`. Any other program, a pipe, a redirection, `;` or `&&` outside quotes is denied. Their commands are listed under "The ui commands", "Recording results" and, when the test backend runs, "The peer commands" below: `record` records each case's result as soon as it is done, and `peer` drives CLI clients that the app can connect to, message and add to groups.
 - **Read, Write and Edit work only in the current directory.** Screenshots go to `shots/` (look at the `-view.jpg` files, they are smaller), and you write `report.md` here. This whole prompt, with the plan, is also `prompt.md` here: read it again when you are unsure, and after the conversation has been compacted.
 
 ## What you need to know about the app and the helper
