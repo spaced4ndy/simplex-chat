@@ -314,6 +314,10 @@ jobs:
           fi
           scripts/ci/android/smoke-test.sh "$RUNNER_TEMP/apk/$APK" "$RUNNER_TEMP/smoke-test" ${cases:-}
 
+      - name: Run fix checks
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: scripts/ci/android/fix-checks.sh "$RUNNER_TEMP/apk/$APK" "$RUNNER_TEMP/smoke-test/fix-checks"
+
       - name: Stop test backend
         if: ${{ !cancelled() && steps.backend.outcome != 'skipped' }}
         run: scripts/ci/desktop-linux/backend.sh stop "$RUNNER_TEMP/backend"
